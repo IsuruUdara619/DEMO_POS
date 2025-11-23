@@ -53,6 +53,17 @@ export default function Sales() {
   const discountRef = useRef<HTMLInputElement | null>(null);
   const noteRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    setItems(prev => prev.map(it => {
+      if (it.inventory_id && (it.availableQty === null || isNaN(it.availableQty as any))) {
+        const m = inventory.find(rr => rr.inventory_id === it.inventory_id && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date)));
+        const a = m ? Number(m.qty as any) : it.availableQty;
+        return { ...it, availableQty: (a !== null && !isNaN(a as any)) ? Number(a as any) : it.availableQty };
+      }
+      return it;
+    }));
+  }, [inventory]);
+
   function focusField(row: number, field: 'inv'|'qty'|'unit'|'brand') {
     if (field === 'inv') { const el = invRefs.current[row]; if (el) el.focus(); }
     else if (field === 'qty') { const el = qtyRefs.current[row]; if (el) el.focus(); }
@@ -248,15 +259,36 @@ export default function Sales() {
     return Math.ceil(n / 5) * 5;
   }
 
+  function parseBarcodeInfo(code: string): { inventory_id: number | null; purchase_date: string | null } {
+    const vv = (code || '').trim().toUpperCase();
+    const m = vv.match(/^BC-(\d+)-INV-(\d+)-(\d{8})$/);
+    if (!m) return { inventory_id: null, purchase_date: null };
+    const invId = Number(m[2]);
+    const y = m[3].slice(0,4), mo = m[3].slice(4,6), d = m[3].slice(6,8);
+    const date = `${y}-${mo}-${d}`;
+    return { inventory_id: isNaN(invId) ? null : invId, purchase_date: date };
+  }
+
   async function pickInventory(i: { inventory_id: number; product_name: string | null; brand: string | null; sku?: string | null; purchase_date?: string | null }, row?: number) {
     if (typeof row === 'number') {
       const sku = i.sku ?? null;
-      const invMatch = inventory.find(r => r.inventory_id === i.inventory_id);
+      const invMatch = inventory.find(r => r.inventory_id === i.inventory_id && (i.purchase_date ? String(r.purchase_date).slice(0,10) === String(i.purchase_date).slice(0,10) : true));
       const avail = invMatch ? Number(invMatch.qty as any) : null;
       setItems(prev => prev.map((it, idx) => {
         if (idx !== row) return it;
         const pd = i.purchase_date ? (() => { const d2 = new Date(i.purchase_date as string); return isNaN(d2.getTime()) ? String(i.purchase_date).slice(0,10) : d2.toLocaleDateString('en-CA'); })() : null;
-        return { ...it, inventory_id: i.inventory_id, invQuery: `${i.product_name || ''} ${i.brand ? `(${i.brand})` : ''}`.trim(), showSuggest: false, sku, qtyUnit: sku === 'Grams' ? 'Grams' : 'PCS', brand: i.brand || '', purchase_date: pd, availableQty: (avail !== null && !isNaN(avail)) ? avail : null };
+        const curQtyNum = Number(it.qty || 0);
+        let nextQtyStr = it.qty;
+        if (!isNaN(curQtyNum) && avail !== null && !isNaN(avail)) {
+          if ((sku || '') === 'Grams') {
+            const eff = it.qtyUnit === 'KG' ? curQtyNum * 1000 : curQtyNum;
+            const clampedEff = Math.min(eff, avail);
+            nextQtyStr = it.qtyUnit === 'KG' ? String(clampedEff / 1000) : String(clampedEff);
+          } else {
+            nextQtyStr = String(Math.min(curQtyNum, avail));
+          }
+        }
+        return { ...it, inventory_id: i.inventory_id, invQuery: `${i.product_name || ''} ${i.brand ? `(${i.brand})` : ''}`.trim(), showSuggest: false, sku, qtyUnit: sku === 'Grams' ? 'Grams' : 'PCS', brand: i.brand || '', purchase_date: pd, availableQty: (avail !== null && !isNaN(avail)) ? avail : null, qty: nextQtyStr };
       }));
       try {
         const dLocal = i.purchase_date ? (() => { const d3 = new Date(i.purchase_date as string); return isNaN(d3.getTime()) ? String(i.purchase_date).slice(0,10) : d3.toLocaleDateString('en-CA'); })() : null;
@@ -280,6 +312,15 @@ export default function Sales() {
     setError('');
     const validItems = items.filter(it => (it.inventory_id || it.barcode) && it.qty && Number(it.qty) > 0);
     if (validItems.length === 0) { setError('Add at least one product with qty'); return; }
+    for (const it of validItems) {
+      const qtyNum = Number(it.qty || 0);
+      const effectiveQty = (it.sku || '') === 'Grams' ? (it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum) : qtyNum;
+      const avail = it.availableQty ?? null;
+      if (avail !== null && !isNaN(avail) && effectiveQty > avail) {
+        setError('Qty exceeds available stock for one or more items');
+        return;
+      }
+    }
     try {
       const payload = {
         sale_invoice_no: invoiceNo || undefined,
@@ -333,6 +374,7 @@ export default function Sales() {
       } catch {}
       setInvoiceNo(''); setCustomerName(''); setContactNo(''); setAddress(''); setDate(''); setDiscount(''); setNote(''); setItems([{ inventory_id: null, invQuery: '', showSuggest: false, sku: null, qtyUnit: 'PCS', qty: '', brand: '', unitPrice: null, sellingPrice: null, barcode: null, purchase_date: null, availableQty: null }]); setShowForm(false);
       try { localStorage.removeItem('sales_form_cache'); } catch {}
+      setTimeout(() => { try { window.location.reload(); } catch {} }, 300);
     } catch (err: any) {
       if (err?.status === 401) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
       setError(err?.message || 'Failed to save sale');
@@ -445,10 +487,10 @@ export default function Sales() {
                         <input
                           placeholder="Search product, brand, SKU, or ID"
                           value={it.invQuery}
-                          onChange={async e=>{ const v = e.target.value; setItems(prev => prev.map((x, i) => i === idx ? { ...x, invQuery: v, showSuggest: true } : x)); const vv = v.trim(); if (vv.toUpperCase().startsWith('BC-')) { try { const r = await get(`/barcode/${encodeURIComponent(vv)}/pricing`); if (r?.inventory_id) { await pickInventory({ inventory_id: r.inventory_id, product_name: r.product_name, brand: r.brand, sku: r.sku }, idx); } const unit = (r?.unit_price !== undefined && r?.unit_price !== null) ? Number(r.unit_price) : null; const sell = (r?.selling_price !== undefined && r?.selling_price !== null) ? Number(r.selling_price) : (unit !== null ? (r.sku === 'Grams' ? Number((unit * 1.3).toFixed(2)) : Math.ceil((unit * 1.3) / 5) * 5) : null); const match = r?.inventory_id ? inventory.find(rr => rr.inventory_id === r.inventory_id) : null; const availQty = match ? Number(match.qty as any) : null; setItems(prev => prev.map((x, i) => i === idx ? { ...x, inventory_id: (r.inventory_id ?? x.inventory_id ?? null), invQuery: `${r.product_name || ''}${(r.brand || x.brand) ? ` (${r.brand || x.brand})` : ''}`.trim(), showSuggest: false, sku: r.sku || x.sku || null, qtyUnit: ((r.sku || x.sku) === 'Grams' ? 'Grams' : 'PCS'), brand: r.brand || x.brand || '', unitPrice: unit ?? x.unitPrice ?? null, sellingPrice: sell ?? x.sellingPrice ?? null, barcode: vv, purchase_date: (r.purchase_date ? String(r.purchase_date).slice(0,10) : (x.purchase_date ?? null)), availableQty: (availQty !== null && !isNaN(availQty)) ? availQty : (x.availableQty ?? null) } : x)); } catch {} } }}
+                          onChange={async e=>{ const v = e.target.value; setItems(prev => prev.map((x, i) => i === idx ? { ...x, invQuery: v, showSuggest: true } : x)); const vv = v.trim(); if (vv.toUpperCase().startsWith('BC-')) { try { const parsed = parseBarcodeInfo(vv); const r = await get(`/barcode/${encodeURIComponent(vv)}/pricing`); const invId = (r?.inventory_id ?? parsed.inventory_id) ?? null; const pDate = (r?.purchase_date ? String(r.purchase_date).slice(0,10) : parsed.purchase_date) ?? null; if (invId) { await pickInventory({ inventory_id: invId, product_name: r.product_name, brand: r.brand, sku: r.sku, purchase_date: pDate }, idx); } const unit = (r?.unit_price !== undefined && r?.unit_price !== null) ? Number(r.unit_price) : null; const sell = (r?.selling_price !== undefined && r?.selling_price !== null) ? Number(r.selling_price) : (unit !== null ? (r.sku === 'Grams' ? Number((unit * 1.3).toFixed(2)) : Math.ceil((unit * 1.3) / 5) * 5) : null); const match = invId ? inventory.find(rr => rr.inventory_id === invId && (pDate ? String(rr.purchase_date).slice(0,10) === pDate : true)) : null; const availQty = match ? Number(match.qty as any) : null; setItems(prev => prev.map((x, i) => { if (i !== idx) return x; const curNum = Number(x.qty || 0); let nextQtyStr = x.qty; if (!isNaN(curNum) && availQty !== null && !isNaN(availQty)) { if ((r.sku || x.sku) === 'Grams') { const eff = x.qtyUnit === 'KG' ? curNum * 1000 : curNum; const clampedEff = Math.min(eff, availQty); nextQtyStr = x.qtyUnit === 'KG' ? String(clampedEff / 1000) : String(clampedEff); } else { nextQtyStr = String(Math.min(curNum, availQty)); } } return { ...x, inventory_id: (invId ?? x.inventory_id ?? null), invQuery: `${r.product_name || ''}${(r.brand || x.brand) ? ` (${r.brand || x.brand})` : ''}`.trim(), showSuggest: false, sku: r.sku || x.sku || null, qtyUnit: ((r.sku || x.sku) === 'Grams' ? 'Grams' : 'PCS'), brand: r.brand || x.brand || '', unitPrice: unit ?? x.unitPrice ?? null, sellingPrice: sell ?? x.sellingPrice ?? null, barcode: vv, purchase_date: (pDate ?? x.purchase_date ?? null), availableQty: (availQty !== null && !isNaN(availQty)) ? availQty : (x.availableQty ?? null), qty: nextQtyStr }; })); } catch {} } }}
                           onKeyDown={e => { handleNavKey(e, `inv-${idx}`); handleKeyDown(e, idx, 'inv'); }}
                           ref={el => { invRefs.current[idx] = el }}
-                          onPaste={async e=>{ e.preventDefault(); e.stopPropagation(); const text = (e.clipboardData?.getData('text') || '').trim(); if (text && text.toUpperCase().startsWith('BC-')) { try { const r = await get(`/barcode/${encodeURIComponent(text)}/pricing`); if (r?.inventory_id) { await pickInventory({ inventory_id: r.inventory_id, product_name: r.product_name, brand: r.brand, sku: r.sku }, idx); } const unit = (r?.unit_price !== undefined && r?.unit_price !== null) ? Number(r.unit_price) : null; const sell = (r?.selling_price !== undefined && r?.selling_price !== null) ? Number(r.selling_price) : (unit !== null ? (r.sku === 'Grams' ? Number((unit * 1.3).toFixed(2)) : Math.ceil((unit * 1.3) / 5) * 5) : null); const match = r?.inventory_id ? inventory.find(rr => rr.inventory_id === r.inventory_id) : null; const availQty = match ? Number(match.qty as any) : null; setItems(prev => prev.map((x, i) => i === idx ? { ...x, inventory_id: (r.inventory_id ?? x.inventory_id ?? null), invQuery: `${r.product_name || ''}${(r.brand || x.brand) ? ` (${r.brand || x.brand})` : ''}`.trim(), showSuggest: false, sku: r.sku || x.sku || null, qtyUnit: ((r.sku || x.sku) === 'Grams' ? 'Grams' : 'PCS'), brand: r.brand || x.brand || '', unitPrice: unit ?? x.unitPrice ?? null, sellingPrice: sell ?? x.sellingPrice ?? null, barcode: text, purchase_date: (r.purchase_date ? String(r.purchase_date).slice(0,10) : (x.purchase_date ?? null)), availableQty: (availQty !== null && !isNaN(availQty)) ? availQty : (x.availableQty ?? null) } : x)); } catch {} } }}
+                          onPaste={async e=>{ e.preventDefault(); e.stopPropagation(); const text = (e.clipboardData?.getData('text') || '').trim(); if (text && text.toUpperCase().startsWith('BC-')) { try { const parsed = parseBarcodeInfo(text); const r = await get(`/barcode/${encodeURIComponent(text)}/pricing`); const invId = (r?.inventory_id ?? parsed.inventory_id) ?? null; const pDate = (r?.purchase_date ? String(r.purchase_date).slice(0,10) : parsed.purchase_date) ?? null; if (invId) { await pickInventory({ inventory_id: invId, product_name: r.product_name, brand: r.brand, sku: r.sku, purchase_date: pDate }, idx); } const unit = (r?.unit_price !== undefined && r?.unit_price !== null) ? Number(r.unit_price) : null; const sell = (r?.selling_price !== undefined && r?.selling_price !== null) ? Number(r.selling_price) : (unit !== null ? (r.sku === 'Grams' ? Number((unit * 1.3).toFixed(2)) : Math.ceil((unit * 1.3) / 5) * 5) : null); const match = invId ? inventory.find(rr => rr.inventory_id === invId && (pDate ? String(rr.purchase_date).slice(0,10) === pDate : true)) : null; const availQty = match ? Number(match.qty as any) : null; setItems(prev => prev.map((x, i) => { if (i !== idx) return x; const curNum = Number(x.qty || 0); let nextQtyStr = x.qty; if (!isNaN(curNum) && availQty !== null && !isNaN(availQty)) { if ((r.sku || x.sku) === 'Grams') { const eff = x.qtyUnit === 'KG' ? curNum * 1000 : curNum; const clampedEff = Math.min(eff, availQty); nextQtyStr = x.qtyUnit === 'KG' ? String(clampedEff / 1000) : String(clampedEff); } else { nextQtyStr = String(Math.min(curNum, availQty)); } } return { ...x, inventory_id: (invId ?? x.inventory_id ?? null), invQuery: `${r.product_name || ''}${(r.brand || x.brand) ? ` (${r.brand || x.brand})` : ''}`.trim(), showSuggest: false, sku: r.sku || x.sku || null, qtyUnit: ((r.sku || x.sku) === 'Grams' ? 'Grams' : 'PCS'), brand: r.brand || x.brand || '', unitPrice: unit ?? x.unitPrice ?? null, sellingPrice: sell ?? x.sellingPrice ?? null, barcode: text, purchase_date: (pDate ?? x.purchase_date ?? null), availableQty: (availQty !== null && !isNaN(availQty)) ? availQty : (x.availableQty ?? null), qty: nextQtyStr }; })); } catch {} } }}
                           onFocus={()=>setItems(prev => prev.map((x, i) => i === idx ? { ...x, showSuggest: true } : x))}
                           onBlur={()=>setTimeout(()=>setItems(prev => prev.map((x, i) => i === idx ? { ...x, showSuggest: false } : x)), 150)}
                           style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }}
@@ -467,7 +509,9 @@ export default function Sales() {
                     <div>
                       <label style={{ display: 'block', marginBottom: 6 }}>Qty {it.sku ? `(${it.sku})` : ''}</label>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="number" step={(it.sku || '') === 'PCS' ? 1 : 0.01} value={it.qty} onChange={e=>{ const vStr = e.target.value; const vNum = Number(vStr || 0); const avail = it.availableQty ?? null; let nextQtyStr = vStr; if (!isNaN(vNum) && avail !== null && !isNaN(avail)) { if ((it.sku || '') === 'Grams') { const eff = it.qtyUnit === 'KG' ? vNum * 1000 : vNum; const clampedEff = Math.min(eff, avail); nextQtyStr = it.qtyUnit === 'KG' ? String(clampedEff / 1000) : String(clampedEff); } else { const clamped = Math.min(vNum, avail); nextQtyStr = String(clamped); } } setItems(prev => prev.map((x, i) => i === idx ? { ...x, qty: nextQtyStr } : x)); }} max={(() => { const avail = it.availableQty ?? null; if (avail === null || isNaN(avail)) return undefined; if ((it.sku || '') === 'Grams') { return it.qtyUnit === 'KG' ? Number((avail / 1000).toFixed(3)) : avail; } return avail; })()} onKeyDown={e => { handleNavKey(e, `qty-${idx}`); handleKeyDown(e, idx, 'qty'); }} ref={el => { qtyRefs.current[idx] = el }} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                        <button type="button" onClick={() => { const availCalc = (() => { const a = it.availableQty; if (a !== null && !isNaN(a as any)) return Number(a as any); const m = inventory.find(rr => rr.inventory_id === (it.inventory_id as number) && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date))); return m ? Number(m.qty as any) : NaN; })(); const qtyNum = Number(it.qty || 0); if (isNaN(qtyNum)) return; if ((it.sku || '') === 'Grams') { const eff = it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum; const stepEff = it.qtyUnit === 'KG' ? 0.01 * 1000 : 0.01; const nextEff = Math.max(0, eff - stepEff); const nextQtyStr = it.qtyUnit === 'KG' ? String(Number((nextEff / 1000).toFixed(3))) : String(nextEff); setItems(prev => prev.map((x, i) => i === idx ? { ...x, qty: nextQtyStr } : x)); } else { const next = Math.max(0, qtyNum - 1); setItems(prev => prev.map((x, i) => i === idx ? { ...x, qty: String(next) } : x)); } }} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #ddd', background: '#f3f3f3', color: '#333', cursor: 'pointer' }}>-</button>
+                        <input type="number" step={(it.sku || '') === 'PCS' ? 1 : 0.01} value={it.qty} onChange={e=>{ const vStr = e.target.value; const vNum = Number(vStr || 0); const availCalc = (() => { const a = it.availableQty; if (a !== null && !isNaN(a as any)) return Number(a as any); const m = inventory.find(rr => rr.inventory_id === (it.inventory_id as number) && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date))); return m ? Number(m.qty as any) : NaN; })(); let nextQtyStr = vStr; if (!isNaN(vNum) && !isNaN(availCalc)) { if ((it.sku || '') === 'Grams') { const eff = it.qtyUnit === 'KG' ? vNum * 1000 : vNum; const clampedEff = Math.min(eff, availCalc); nextQtyStr = it.qtyUnit === 'KG' ? String(clampedEff / 1000) : String(clampedEff); } else { const clamped = Math.min(vNum, availCalc); nextQtyStr = String(clamped); } } setItems(prev => prev.map((x, i) => { if (i !== idx) return x; const m = inventory.find(rr => rr.inventory_id === (x.inventory_id as number) && (!x.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === x.purchase_date))); const a2 = m ? Number(m.qty as any) : x.availableQty; return { ...x, qty: nextQtyStr, availableQty: (x.availableQty === null && a2 !== null && !isNaN(a2 as any)) ? Number(a2 as any) : x.availableQty }; })); }} max={(() => { const a = it.availableQty; const availCalc = (a !== null && !isNaN(a as any)) ? Number(a as any) : (() => { const m = inventory.find(rr => rr.inventory_id === (it.inventory_id as number) && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date))); return m ? Number(m.qty as any) : NaN; })(); if (isNaN(availCalc)) return undefined; if ((it.sku || '') === 'Grams') { return it.qtyUnit === 'KG' ? Number((availCalc / 1000).toFixed(3)) : availCalc; } return availCalc; })()} onKeyDown={e => { handleNavKey(e, `qty-${idx}`); handleKeyDown(e, idx, 'qty'); }} ref={el => { qtyRefs.current[idx] = el }} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                        <button type="button" onClick={() => { const availCalc = (() => { const a = it.availableQty; if (a !== null && !isNaN(a as any)) return Number(a as any); const m = inventory.find(rr => rr.inventory_id === (it.inventory_id as number) && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date))); return m ? Number(m.qty as any) : NaN; })(); const qtyNum = Number(it.qty || 0); if (isNaN(qtyNum)) return; if ((it.sku || '') === 'Grams') { const eff = it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum; const stepEff = it.qtyUnit === 'KG' ? 0.01 * 1000 : 0.01; const nextEff = Math.min(isNaN(availCalc) ? eff + stepEff : availCalc, eff + stepEff); const nextQtyStr = it.qtyUnit === 'KG' ? String(Number((nextEff / 1000).toFixed(3))) : String(nextEff); setItems(prev => prev.map((x, i) => i === idx ? { ...x, qty: nextQtyStr } : x)); } else { const next = Math.min(isNaN(availCalc) ? qtyNum + 1 : availCalc, qtyNum + 1); setItems(prev => prev.map((x, i) => i === idx ? { ...x, qty: String(next) } : x)); } }} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #ddd', background: '#f3f3f3', color: '#333', cursor: 'pointer' }}>+</button>
                         <select
                           value={it.qtyUnit}
                           onChange={e=>{ const v = e.target.value as any; setItems(prev => prev.map((x, i) => { if (i !== idx) return x; const curNum = Number(x.qty || 0); if ((x.sku || '') === 'Grams') { const eff = x.qtyUnit === 'KG' ? curNum * 1000 : curNum; const nextQty = v === 'KG' ? eff / 1000 : eff; const avail = x.availableQty ?? null; const clampedEff = (avail !== null && !isNaN(avail)) ? Math.min(eff, avail) : eff; const nextQtyClamped = v === 'KG' ? clampedEff / 1000 : clampedEff; return { ...x, qtyUnit: v, qty: String(nextQtyClamped) }; } return { ...x, qtyUnit: v }; })); }}
@@ -485,6 +529,9 @@ export default function Sales() {
                             <option value="PCS">PCS</option>
                           )}
                         </select>
+                        <div style={{ alignSelf: 'center', fontSize: 13, fontWeight: 700, color: roseGold, background: roseGoldLight, border: `1px solid ${roseGold}`, borderRadius: 999, padding: '4px 10px', lineHeight: 1.2 }}>
+                          Available: {(() => { const availCalc = (() => { const a = it.availableQty; if (a !== null && !isNaN(a as any)) return Number(a as any); const m = inventory.find(rr => rr.inventory_id === (it.inventory_id as number) && (!it.purchase_date || (rr.purchase_date && String(rr.purchase_date).slice(0,10) === it.purchase_date))); return m ? Number(m.qty as any) : NaN; })(); if (isNaN(availCalc)) return '-'; if ((it.sku || '') === 'Grams') { return it.qtyUnit === 'KG' ? `${Number((availCalc / 1000).toFixed(3))} KG` : `${availCalc} Grams`; } return `${availCalc} PCS`; })()}
+                        </div>
                       </div>
                     </div>
                     <div>
