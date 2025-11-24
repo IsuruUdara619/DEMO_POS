@@ -239,13 +239,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Products
         </button>
@@ -257,13 +258,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Vendors
         </button>
@@ -274,13 +276,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Purchase
         </button>
@@ -291,13 +294,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Inventory
         </button>
@@ -308,13 +312,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Sales
         </button>
@@ -325,13 +330,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Expenses
         </button>
@@ -339,7 +345,7 @@ export default function Dashboard() {
           onClick={goReports}
           style={{
             background: redGrad,
-            color: '#fff',
+            color: '#000',
             border: 'none',
             padding: '8px 16px',
             borderRadius: 12,
@@ -348,8 +354,8 @@ export default function Dashboard() {
             boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
             transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Reports
         </button>
@@ -360,13 +366,14 @@ export default function Dashboard() {
             color: '#000',
             border: 'none',
             padding: '8px 16px',
-            borderRadius: 8,
-            fontWeight: 600,
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Loyalty
         </button>
@@ -394,14 +401,15 @@ export default function Dashboard() {
             background: redGrad,
             color: '#000',
             border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 600,
+            padding: '8px 16px',
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = redHoverGrad)}
-          onMouseLeave={e => (e.currentTarget.style.background = redGrad)}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Home
         </button>
@@ -411,14 +419,15 @@ export default function Dashboard() {
             background: redGrad,
             color: '#000',
             border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 600,
+            padding: '8px 16px',
+            borderRadius: 12,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease'
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = redHoverGrad)}
-          onMouseLeave={e => (e.currentTarget.style.background = redGrad)}
+          onMouseEnter={e => { e.currentTarget.style.background = redHoverGrad; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.16)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = redGrad; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#000'; }}
         >
           Logout
         </button>

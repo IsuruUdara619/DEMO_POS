@@ -137,6 +137,14 @@ router.get('/:barcode/pricing', async (req, res) => {
     const selling = sellingFromBatch != null
       ? sellingFromBatch
       : (unit !== null ? (sku === 'Grams' ? Number((unit * 1.3).toFixed(2)) : Math.ceil((unit * 1.3) / 5) * 5) : null);
+    const availRow = await pool.query(
+      `SELECT COALESCE(SUM(pi.remaining_qty),0) AS qty
+       FROM purchase_items pi
+       JOIN purchases p ON p.purchase_id = pi.purchase_id
+       WHERE pi.product_id = $1 AND p.vendor_id = $2 AND (pi.brand IS NOT DISTINCT FROM $3)`,
+      [productId, vendorId, brand]
+    );
+    const availableQty = availRow.rows[0]?.qty != null ? Number(availRow.rows[0].qty) : 0;
     res.json({
       inventory_id: inventoryId,
       product_name: productName,
@@ -145,6 +153,7 @@ router.get('/:barcode/pricing', async (req, res) => {
       sku,
       unit_price: unit,
       selling_price: selling,
+      available_qty: availableQty,
       purchase_date: pr.purchase_date ? String(pr.purchase_date).slice(0,10) : (dateFromCode || null)
     });
   } catch (e: any) {
