@@ -20,6 +20,8 @@ export default function Products() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterSku, setFilterSku] = useState('');
   const [filterId, setFilterId] = useState('');
+  const [page, setPage] = useState(0);
+  const pageSize = 6;
   const categories = [
     'Baking Essentials',
     'Sugars & Sweeteners',
@@ -64,6 +66,9 @@ export default function Products() {
   }
 
   useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    setPage(0);
+  }, [filterText, filterId, filterCategory, filterSku]);
 
   const [barcodeProductQuery, setBarcodeProductQuery] = useState('');
   const [showBarcodeProductSuggest, setShowBarcodeProductSuggest] = useState(false);
@@ -93,11 +98,11 @@ export default function Products() {
       if (barcodeProductId) {
         const it = its.find((x: any) => x.product_id === barcodeProductId);
         if (!it) continue;
-        out.push({ invoice_no: p.invoice_no || '', label: `${nameOf(it.product_id)} (Purchased: ${purchaseDate})` });
+        out.push({ invoice_no: p.invoice_no || '', label: `${nameOf(it.product_id)}${it.brand ? ` (${it.brand})` : ''} (Purchased: ${purchaseDate})` });
       } else {
         const first = its[0];
         const nm = first ? nameOf(first.product_id) : '';
-        out.push({ invoice_no: p.invoice_no || '', label: `${nm} (Purchased: ${purchaseDate})` });
+        out.push({ invoice_no: p.invoice_no || '', label: `${nm}${first?.brand ? ` (${first.brand})` : ''} (Purchased: ${purchaseDate})` });
       }
     }
     return out;
@@ -330,20 +335,52 @@ export default function Products() {
             {items.length === 0 ? (
               <p>No products yet.</p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                {items
+              (() => {
+                const filtered = items
                   .filter(it => !filterText || it.product_name.toLowerCase().includes(filterText.toLowerCase()))
                   .filter(it => !filterId || it.product_id === Number(filterId))
                   .filter(it => !filterCategory || it.category === filterCategory)
-                  .filter(it => !filterSku || it.sku === filterSku)
-                  .map(it => (
-                  <div key={it.product_id} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
-                    <div style={{ fontWeight: 700, color: roseGold }}>{it.product_name}</div>
-                    <div style={{ fontSize: 12, color: '#555' }}>SKU: {it.sku || '-'}</div>
-                    <div style={{ fontSize: 12, color: '#555' }}>Category: {it.category || '-'}</div>
+                  .filter(it => !filterSku || it.sku === filterSku);
+                const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+                const curPage = Math.min(page, totalPages - 1);
+                const start = curPage * pageSize;
+                const end = start + pageSize;
+                const pageItems = filtered.slice(start, end);
+                return (
+                  <div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                      {pageItems.map(it => (
+                        <div key={it.product_id} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
+                          <div style={{ fontWeight: 700, color: roseGold }}>{it.product_name}</div>
+                          <div style={{ fontSize: 12, color: '#555' }}>SKU: {it.sku || '-'}</div>
+                          <div style={{ fontSize: 12, color: '#555' }}>Category: {it.category || '-'}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                      <button
+                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                        disabled={curPage === 0}
+                        style={{ background: gold, color: '#000', border: 'none', padding: '8px 12px', borderRadius: 8, fontWeight: 600, cursor: curPage===0 ? 'not-allowed' : 'pointer', opacity: curPage===0 ? 0.6 : 1 }}
+                        onMouseEnter={e => { if (curPage!==0) e.currentTarget.style.background = goldHover; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = gold; }}
+                      >
+                        Prev
+                      </button>
+                      <div style={{ fontSize: 12, color: '#555' }}>Page {curPage + 1} of {totalPages}</div>
+                      <button
+                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={curPage >= totalPages - 1}
+                        style={{ background: gold, color: '#000', border: 'none', padding: '8px 12px', borderRadius: 8, fontWeight: 600, cursor: curPage>=totalPages-1 ? 'not-allowed' : 'pointer', opacity: curPage>=totalPages-1 ? 0.6 : 1 }}
+                        onMouseEnter={e => { if (curPage<totalPages-1) e.currentTarget.style.background = goldHover; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = gold; }}
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()
             )}
           </div>
         </div>

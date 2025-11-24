@@ -9,6 +9,7 @@ const roseGold = '#b76e79';
 const roseGoldLight = '#d9a1aa';
 const gold = '#d4af37';
 const goldHover = '#c9a227';
+const SHOP_NAME = 'Heaven_Bakers';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -191,12 +192,6 @@ export default function Reports() {
 
   function exportPDF() {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text(`Heaven Bakers`, 14, 16);
-    doc.setFontSize(14);
-    doc.text(`${report} Report`, 14, 24);
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, 28, 200, 28);
     let y = 34;
     if (report === 'Sales') {
       const filtered = salesById.filter(s => inRange(new Date(s.date)));
@@ -214,13 +209,24 @@ export default function Reports() {
       const totalProfit = filtered.reduce((acc, s) => acc + (s.items || []).reduce((a: number, it: any) => a + Number(it.profit || 0), 0), 0);
       const invoiceCount = filtered.length;
       const avgInvoice = invoiceCount ? Number((totalSales / invoiceCount).toFixed(2)) : 0;
-      addLine(`Date Range: ${from && to ? `${new Date(from).toLocaleDateString()} - ${new Date(to).toLocaleDateString()}` : 'All Dates'}`, 12, true);
-      addLine(`Sales Total: Rs. ${fmt(totalSales)}`, 12);
-      addLine(`Profit Total: Rs. ${fmt(totalProfit)}`, 12);
-      addLine(`Invoices: ${invoiceCount}`, 12);
-      addLine(`Average per Invoice: Rs. ${fmt(avgInvoice)}`, 12);
-      addLine(`Generated: ${new Date().toLocaleString()}`, 11);
-      y += 4;
+      const dateRangeLabel = from && to ? `${new Date(from).toLocaleDateString()} - ${new Date(to).toLocaleDateString()}` : 'All Dates';
+      (doc as any).autoTable({
+        head: [["Metric", "Value"]],
+        body: [
+          ["Date Range", dateRangeLabel],
+          ["Sales Total", `Rs. ${fmt(totalSales)}`],
+          ["Profit Total", `Rs. ${fmt(totalProfit)}`],
+          ["Invoices", String(invoiceCount)],
+          ["Average per Invoice", `Rs. ${fmt(avgInvoice)}`],
+          ["Generated", new Date().toLocaleString()]
+        ],
+        startY: y,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        margin: { top: 34, bottom: 16 }
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
       addLine('By Day', 12, true);
       const dayMap: Record<string, { total: number; profit: number; invoices: number }> = {};
       for (const s of filtered) {
@@ -233,10 +239,17 @@ export default function Reports() {
       }
       const byDay = Object.entries(dayMap).map(([date, v]) => ({ date, total: Number(v.total.toFixed(2)), profit: Number(v.profit.toFixed(2)), invoices: v.invoices }))
         .sort((a,b) => a.date.localeCompare(b.date));
-      for (const d of byDay) {
-        addLine(`${new Date(d.date).toLocaleDateString()} — Invoices: ${d.invoices}, Total: Rs. ${fmt(d.total)}, Profit: Rs. ${fmt(d.profit)}`);
-      }
-      y += 4;
+      // @ts-ignore
+      doc.autoTable({
+        head: [['Date', 'Invoices', 'Total', 'Profit']],
+        body: byDay.map(d => [new Date(d.date).toLocaleDateString(), String(d.invoices), `Rs. ${fmt(d.total)}`, `Rs. ${fmt(d.profit)}`]),
+        startY: y + 2,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        margin: { top: 34, bottom: 16 }
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
       addLine('By Product', 12, true);
       const invNameMap: Record<number, string> = {};
       for (const i of inventoryRows) invNameMap[i.inventory_id] = `${i.product_name || 'Unknown'}${i.brand ? ` (${i.brand})` : ''}`;
@@ -253,55 +266,70 @@ export default function Reports() {
       }
       const byProduct = Object.entries(prodMap).map(([product, v]) => ({ product, qty: v.qty, revenue: v.revenue, profit: v.profit }))
         .sort((a,b) => b.revenue - a.revenue);
-      for (const p of byProduct) {
-        addLine(`${p.product} — Qty: ${p.qty}, Revenue: Rs. ${fmt(p.revenue)}, Profit: Rs. ${fmt(p.profit)}`);
-      }
-      y += 4;
-      addLine('Invoices', 12, true);
-      for (const s of filtered) {
-        const invDate = new Date(s.date).toLocaleDateString();
-        const invTotal = Number(s.total_amount || 0);
-        const invProfit = (s.items || []).reduce((a: number, it: any) => a + Number(it.profit || 0), 0);
-        const cust = s.customer_name ? String(s.customer_name) : '-';
-        const disc = s.discount != null ? `${Number(s.discount)}%` : '-';
-        addLine(`Invoice: ${s.sale_invoice_no || '-'} — ${invDate}`, 12, true);
-        addLine(`Customer: ${cust} | Discount: ${disc}`);
-        addLine(`Total: Rs. ${fmt(invTotal)} | Items: ${(s.items || []).length} | Profit: Rs. ${fmt(invProfit)}`);
-        for (const it of (s.items || [])) {
-          const name = invNameMap[it.inventory_id] || `ID ${it.inventory_id}`;
-          const qty = Number(it.qty || 0);
-          const sp = Number(it.selling_price || 0);
-          const rev = Number((sp * qty).toFixed(2));
-          const pr = Number(it.profit || 0);
-          addLine(`- ${name}: ${qty} x Rs. ${fmt(sp)} = Rs. ${fmt(rev)} | Profit: Rs. ${fmt(pr)}`);
-        }
-        y += 2;
-      }
+      // @ts-ignore
+      (doc as any).autoTable({
+        head: [['Product', 'Qty', 'Revenue', 'Profit']],
+        body: byProduct.map(p => [p.product, String(p.qty), `Rs. ${fmt(p.revenue)}`, `Rs. ${fmt(p.profit)}`]),
+        startY: y + 2,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        margin: { top: 34, bottom: 16 }
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
     } else {
       const rows = currentRows();
       const head = report === 'Summary' ? [['Metric', 'Value']] : [Object.keys(rows[0] || {})];
       const body = report === 'Summary' ? rows.map(r => [r.label, String(r.value)]) : rows.map(r => Object.values(r).map(v => typeof v === 'number' ? v.toFixed(2) : String(v)));
       // @ts-ignore
-      doc.autoTable({ head, body, startY: y });
+      doc.autoTable({
+        head,
+        body,
+        startY: y,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        margin: { top: 34, bottom: 16 },
+        didDrawPage: (data: any) => {
+          const w = (doc as any).internal.pageSize.getWidth();
+          const h = (doc as any).internal.pageSize.getHeight();
+          doc.setFontSize(18);
+          doc.setFont('helvetica', 'bold');
+          doc.text(SHOP_NAME, 14, 16);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${report} Report`, 14, 24);
+          doc.setDrawColor(200, 200, 200);
+          doc.line(14, 28, w - 14, 28);
+          doc.setFontSize(10);
+          doc.text(`Page ${data.pageNumber} of ${data.pageCount}`, w - 44, h - 10);
+        }
+      });
     }
     const name = `Heaven_${report}_${from || 'all'}_${to || 'all'}.pdf`;
     const totalPages = (doc as any).getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      (doc as any).setPage(i);
-      doc.setFontSize(10);
-      doc.text(`Page ${i} of ${totalPages}`, 200 - 30, (doc as any).internal.pageSize.getHeight() - 10);
+    if (report === 'Sales') {
+      const w = (doc as any).internal.pageSize.getWidth();
+      const h = (doc as any).internal.pageSize.getHeight();
+      for (let i = 1; i <= totalPages; i++) {
+        (doc as any).setPage(i);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text(SHOP_NAME, 14, 16);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report} Report`, 14, 24);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 28, w - 14, 28);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${totalPages}`, w - 44, h - 10);
+      }
     }
     doc.save(name);
   }
 
   function exportSalesDetailed() {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text(`Heaven Bakers`, 14, 16);
-    doc.setFontSize(14);
-    doc.text(`Sales Report`, 14, 24);
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, 28, 200, 28);
     let y = 34;
     const filtered = salesById.filter(s => inRange(new Date(s.date)));
     const height = (doc as any).internal.pageSize.getHeight();
@@ -334,12 +362,19 @@ export default function Reports() {
       dayMap[key].profit += prof;
       dayMap[key].invoices += 1;
     }
-    const byDay = Object.entries(dayMap).map(([date, v]) => ({ date, total: Number(v.total.toFixed(2)), profit: Number(v.profit.toFixed(2)), invoices: v.invoices }))
+    const byDay = Object.entries(dayMap).map(([date, v]) => ({ date, invoices: v.invoices, total: Number(v.total.toFixed(2)), profit: Number(v.profit.toFixed(2)) }))
       .sort((a,b) => a.date.localeCompare(b.date));
-    for (const d of byDay) {
-      addLine(`${new Date(d.date).toLocaleDateString()} — Invoices: ${d.invoices}, Total: Rs. ${fmt(d.total)}, Profit: Rs. ${fmt(d.profit)}`);
-    }
-    y += 4;
+    // @ts-ignore
+    doc.autoTable({
+      head: [['Date', 'Invoices', 'Total', 'Profit']],
+      body: byDay.map(d => [new Date(d.date).toLocaleDateString(), String(d.invoices), `Rs. ${fmt(d.total)}`, `Rs. ${fmt(d.profit)}`]),
+      startY: y + 2,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 2 },
+      headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+      margin: { top: 34, bottom: 16 }
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
     addLine('By Product', 12, true);
     const invNameMap: Record<number, string> = {};
     for (const i of inventoryRows) invNameMap[i.inventory_id] = `${i.product_name || 'Unknown'}${i.brand ? ` (${i.brand})` : ''}`;
@@ -356,10 +391,17 @@ export default function Reports() {
     }
     const byProduct = Object.entries(prodMap).map(([product, v]) => ({ product, qty: v.qty, revenue: v.revenue, profit: v.profit }))
       .sort((a,b) => b.revenue - a.revenue);
-    for (const p of byProduct) {
-      addLine(`${p.product} — Qty: ${p.qty}, Revenue: Rs. ${fmt(p.revenue)}, Profit: Rs. ${fmt(p.profit)}`);
-    }
-    y += 4;
+      // @ts-ignore
+      doc.autoTable({
+        head: [['Product', 'Qty', 'Revenue', 'Profit']],
+        body: byProduct.map(p => [p.product, String(p.qty), `Rs. ${fmt(p.revenue)}`, `Rs. ${fmt(p.profit)}`]),
+        startY: y + 2,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        margin: { top: 34, bottom: 16 }
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
     addLine('Invoices', 12, true);
     for (const s of filtered) {
       const invDate = new Date(s.date).toLocaleDateString();
@@ -382,10 +424,20 @@ export default function Reports() {
     }
     const name = `Heaven_Sales_${from || 'all'}_${to || 'all'}.pdf`;
     const totalPages = (doc as any).getNumberOfPages();
+    const w = (doc as any).internal.pageSize.getWidth();
+    const h = (doc as any).internal.pageSize.getHeight();
     for (let i = 1; i <= totalPages; i++) {
       (doc as any).setPage(i);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(SHOP_NAME, 14, 16);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Sales Report`, 14, 24);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 28, w - 14, 28);
       doc.setFontSize(10);
-      doc.text(`Page ${i} of ${totalPages}`, 200 - 30, (doc as any).internal.pageSize.getHeight() - 10);
+      doc.text(`Page ${i} of ${totalPages}`, w - 44, h - 10);
     }
     doc.save(name);
   }
@@ -454,7 +506,7 @@ export default function Reports() {
                 onClick={() => setReport(r)}
                 style={{
                   background: report===r ? gold : '#fff',
-                  color: report===r ? '#fff' : '#333',
+                  color: '#000',
                   border: report===r ? 'none' : '1px solid #ddd',
                   padding: '8px 16px',
                   borderRadius: 8,
@@ -462,8 +514,8 @@ export default function Reports() {
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = report===r ? goldHover : '#f7f7f7')}
-                onMouseLeave={e => (e.currentTarget.style.background = report===r ? gold : '#fff')}
+                onMouseEnter={e => { e.currentTarget.style.background = report===r ? goldHover : '#f7f7f7'; e.currentTarget.style.color = '#000'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = report===r ? gold : '#fff'; e.currentTarget.style.color = '#000'; }}
               >
                 {r}
               </button>
