@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Layout from '../components/Layout';
 import { get, post } from '../services/api';
 
 export default function Purchase() {
   const navigate = useNavigate();
-  const roseGold = '#b76e79';
-  const roseGoldLight = '#d9a1aa';
-  const gold = '#d4af37';
-  const goldHover = '#c9a227';
+  const gold = '#001f3f';
+  const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState('');
@@ -28,7 +27,7 @@ export default function Purchase() {
   const [vendors, setVendors] = useState<Array<{ vendor_id: number; name: string }>>([]);
   const [products, setProducts] = useState<Array<{ product_id: number; product_name: string; sku: string | null }>>([]);
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
-  const [qtyUnit, setQtyUnit] = useState<'Grams' | 'KG' | 'PCS'>('PCS');
+  const [qtyUnit, setQtyUnit] = useState<string>('PCS');
   const [purchases, setPurchases] = useState<Array<{
     purchase_id: number; invoice_no: string | null; vendor_id: number | null; vendor_name: string | null; date: string; bill_price: number;
     items: Array<{ purchase_item_id: number; product_id: number; qty: number; total_price: number; unit_price: number; brand: string | null }>
@@ -41,9 +40,8 @@ export default function Purchase() {
   const [fProduct, setFProduct] = useState('');
   const [fProductId, setFProductId] = useState('');
   const [fBrand, setFBrand] = useState('');
+  const cementBrands = ['UltraTech', 'ACC', 'Ambuja', 'Shree Cement', 'MP Birla Cement'];
 
-  function logout() { localStorage.removeItem('token'); navigate('/login', { replace: true }); }
-  function goHome() { navigate('/dashboard'); }
   function toggleForm() { setShowForm(v => !v); }
 
   useEffect(() => {
@@ -87,12 +85,17 @@ export default function Purchase() {
     const q = productQuery.toLowerCase();
     return products.filter(p => p.product_name.toLowerCase().includes(q) || String(p.product_id).includes(productQuery.trim()));
   }, [products, productQuery]);
+  const selectedProduct = useMemo(
+    () => products.find(pr => pr.product_id === Number(productId)) || null,
+    [products, productId]
+  );
+  const isCementProduct = !!selectedProduct && selectedProduct.product_name.toLowerCase().includes('cement');
 
   useEffect(() => {
     const p = products.find(pr => pr.product_id === Number(productId));
     const sku = p?.sku || null;
     setSelectedSku(sku);
-    setQtyUnit(sku === 'Grams' ? 'Grams' : 'PCS');
+    setQtyUnit(sku || 'PCS');
   }, [productId, products]);
 
   const effectiveQty = useMemo(() => {
@@ -119,7 +122,28 @@ export default function Purchase() {
     if (!sellingEdited) {
       setSellingPriceInput(sellingPriceCalc === '' ? '' : String(sellingPriceCalc));
     }
-  }, [sellingPriceCalc, sellingEdited]);
+  }, [unitPriceCalc, sellingEdited]);
+
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter(p => {
+      if (fInvoice && !p.invoice_no?.toLowerCase().includes(fInvoice.toLowerCase())) return false;
+      if (fVendor && !p.vendor_name?.toLowerCase().includes(fVendor.toLowerCase())) return false;
+      if (fDateFrom && new Date(p.date) < new Date(fDateFrom)) return false;
+      if (fDateTo && new Date(p.date) > new Date(fDateTo)) return false;
+      
+      // For product/brand filtering
+      if (fProduct || fBrand) {
+        const hasItem = p.items.some(it => {
+          const prodName = products.find(x => x.product_id === it.product_id)?.product_name || '';
+          if (fProduct && !prodName.toLowerCase().includes(fProduct.toLowerCase())) return false;
+          if (fBrand && !it.brand?.toLowerCase().includes(fBrand.toLowerCase())) return false;
+          return true;
+        });
+        if (!hasItem) return false;
+      }
+      return true;
+    });
+  }, [purchases, fInvoice, fVendor, fDateFrom, fDateTo, fProduct, fBrand, products]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -156,70 +180,20 @@ export default function Purchase() {
   }
 
   return (
-    <div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    <Layout backgroundColor="#808080">
+      <style>{`@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }`}</style>
       {confirmVisible && (
         <div style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 9999, pointerEvents: 'none' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: `1px solid ${roseGoldLight}`, borderRadius: 12, padding: '14px 18px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#808080', border: `1px solid #555`, borderRadius: 12, padding: '14px 18px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
             <span style={{ fontSize: 24 }}>🧾</span>
-            <span style={{ color: roseGold, fontWeight: 600 }}>Purchase added</span>
-            <div style={{ width: 18, height: 18, border: '3px solid #eee', borderTopColor: gold, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ color: '#fff', fontWeight: 600 }}>Purchase added</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 10, height: 18, background: '#fff', animation: 'blink 1s step-end infinite' }} />
+            </div>
           </div>
         </div>
       )}
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          padding: 12,
-          position: 'sticky',
-          top: 0,
-          background: `linear-gradient(90deg, ${roseGold}, ${roseGoldLight})`,
-          color: '#fff',
-          borderBottom: `1px solid ${roseGoldLight}`,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Purchase</div>
-        
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={goHome}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Home
-        </button>
-        <button
-          onClick={logout}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Logout
-        </button>
-      </div>
-
+      
       <div style={{ padding: 24 }}>
         <div style={{ marginBottom: 16 }}>
           <button
@@ -239,26 +213,27 @@ export default function Purchase() {
               padding: 16,
               width: '100%',
               maxWidth: 520,
-              background: 'linear-gradient(135deg, #f8e7a5, #fff)',
+              background: '#808080',
               boxShadow: '0 6px 18px rgba(0,0,0,0.08)',
               boxSizing: 'border-box',
-              marginBottom: 16
+              marginBottom: 16,
+              color: '#fff'
             }}
           >
             {error && (<div style={{ color: 'red', marginBottom: 12 }}>{error}</div>)}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Invoice No</label>
-                <input value={invoiceNo} onChange={e=>setInvoiceNo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Invoice No</label>
+                <input value={invoiceNo} onChange={e=>setInvoiceNo(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Date</label>
-                <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Date</label>
+                <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
 
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Vendor (search)</label>
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Vendor (search)</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     placeholder="Search vendor"
@@ -267,17 +242,17 @@ export default function Purchase() {
                     onFocus={()=>setShowVendorSuggest(true)}
                     onBlur={()=>setTimeout(()=>setShowVendorSuggest(false), 150)}
                     onKeyDown={e=>{ if (e.key === 'Enter' && filteredVendors[0]) { const v=filteredVendors[0]; setVendorId(v.vendor_id); setVendorQuery(v.name); setShowVendorSuggest(false); } }}
-                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box', marginBottom: 6 }}
+                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box', marginBottom: 6 }}
                   />
                   {showVendorSuggest && vendorQuery && filteredVendors.length > 0 && (
-                    <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', background: '#fff', border: `1px solid ${roseGoldLight}`, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.08)', zIndex: 10, maxHeight: 180, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', background: '#444', border: `1px solid #555`, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.08)', zIndex: 10, maxHeight: 180, overflowY: 'auto' }}>
                       {filteredVendors.map(v => (
                         <div
                           key={v.vendor_id}
                           onMouseDown={()=>{ setVendorId(v.vendor_id); setVendorQuery(v.name); setShowVendorSuggest(false); }}
-                          style={{ padding: '8px 12px', cursor: 'pointer' }}
-                          onMouseEnter={e=>{ e.currentTarget.style.background = '#f7f1f2'; }}
-                          onMouseLeave={e=>{ e.currentTarget.style.background = '#fff'; }}
+                          style={{ padding: '8px 12px', cursor: 'pointer', color: '#fff' }}
+                          onMouseEnter={e=>{ e.currentTarget.style.background = '#444'; }}
+                          onMouseLeave={e=>{ e.currentTarget.style.background = '#808080'; }}
                         >
                           {v.name}
                         </div>
@@ -288,7 +263,7 @@ export default function Purchase() {
               </div>
 
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Product (search by name or ID)</label>
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Product (search by name or ID)</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     placeholder="Search product"
@@ -297,17 +272,17 @@ export default function Purchase() {
                     onFocus={()=>setShowProductSuggest(true)}
                     onBlur={()=>setTimeout(()=>setShowProductSuggest(false), 150)}
                     onKeyDown={e=>{ if (e.key === 'Enter' && filteredProducts[0]) { const p=filteredProducts[0]; setProductId(p.product_id); setSelectedSku(p.sku || null); setQtyUnit((p.sku || '') === 'Grams' ? 'Grams' : 'PCS'); setProductQuery(p.product_name); setShowProductSuggest(false); } }}
-                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box', marginBottom: 6 }}
+                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box', marginBottom: 6 }}
                   />
                   {showProductSuggest && productQuery && filteredProducts.length > 0 && (
-                    <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', background: '#fff', border: `1px solid ${roseGoldLight}`, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.08)', zIndex: 10, maxHeight: 180, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', background: '#444', border: `1px solid #555`, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.08)', zIndex: 10, maxHeight: 180, overflowY: 'auto' }}>
                       {filteredProducts.map(p => (
                         <div
                           key={p.product_id}
                           onMouseDown={()=>{ setProductId(p.product_id); setSelectedSku(p.sku || null); setQtyUnit((p.sku || '') === 'Grams' ? 'Grams' : 'PCS'); setProductQuery(p.product_name); setShowProductSuggest(false); }}
-                          style={{ padding: '8px 12px', cursor: 'pointer' }}
-                          onMouseEnter={e=>{ e.currentTarget.style.background = '#f7f1f2'; }}
-                          onMouseLeave={e=>{ e.currentTarget.style.background = '#fff'; }}
+                          style={{ padding: '8px 12px', cursor: 'pointer', color: '#fff' }}
+                          onMouseEnter={e=>{ e.currentTarget.style.background = '#444'; }}
+                          onMouseLeave={e=>{ e.currentTarget.style.background = '#808080'; }}
                         >
                           {p.product_name} (ID: {p.product_id}){p.sku ? ` — ${p.sku}` : ''}
                         </div>
@@ -318,41 +293,55 @@ export default function Purchase() {
               </div>
 
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Bill Price (total)</label>
-                <input type="number" step="0.01" value={billPrice} onChange={e=>setBillPrice(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Bill Price (total)</label>
+                <input type="number" step="0.01" value={billPrice} onChange={e=>setBillPrice(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Quantity {selectedSku ? `(${selectedSku})` : ''}</label>
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Quantity {selectedSku ? `(${selectedSku})` : ''}</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="number" step="0.01" value={qty} onChange={e=>setQty(e.target.value)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                  <input type="number" step="0.01" value={qty} onChange={e=>setQty(e.target.value)} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
                   <select
                     value={qtyUnit}
-                    onChange={e=>setQtyUnit(e.target.value as any)}
-                    style={{ width: 120, padding: 10, borderRadius: 8, border: '1px solid #ddd', background: '#fff' }}
-                    disabled={selectedSku !== 'Grams'}
+                    onChange={e=>setQtyUnit(e.target.value)}
+                    style={{ width: 120, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff' }}
                   >
-                    {selectedSku === 'Grams' ? (
-                      <>
-                        <option value="Grams">Grams</option>
-                        <option value="KG">KG</option>
-                      </>
-                    ) : (
-                      <option value="PCS">PCS</option>
-                    )}
+                    <option value="PCS">PCS</option>
+                    <option value="Grams">Grams</option>
+                    <option value="KG">KG</option>
+                    <option value="FT">FT</option>
+                    <option value="INCH">INCH</option>
+                    <option value="Meters">Meters</option>
                   </select>
                 </div>
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Unit Price (auto)</label>
-                <input value={unitPriceCalc === '' ? '' : String(unitPriceCalc)} readOnly style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', background: '#f7f7f7', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Unit Price (auto)</label>
+                <input value={unitPriceCalc === '' ? '' : String(unitPriceCalc)} readOnly style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#555', color: '#fff', boxSizing: 'border-box' }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Selling Price (+30%, editable)</label>
-                <input value={sellingPriceInput} onChange={e=>{ setSellingEdited(true); setSellingPriceInput(e.target.value); }} type="number" step="0.01" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Selling Price (+30%, editable)</label>
+                <input value={sellingPriceInput} onChange={e=>{ setSellingEdited(true); setSellingPriceInput(e.target.value); }} type="number" step="0.01" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>Brand</label>
-                <input value={brand} onChange={e=>setBrand(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', marginBottom: 6, color: '#fff' }}>Brand</label>
+                {isCementProduct ? (
+                  <select
+                    value={brand}
+                    onChange={e=>setBrand(e.target.value)}
+                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }}
+                  >
+                    <option value="">Select brand...</option>
+                    {cementBrands.map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={brand}
+                    onChange={e=>setBrand(e.target.value)}
+                    style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }}
+                  />
+                )}
               </div>
             </div>
 
@@ -363,73 +352,58 @@ export default function Purchase() {
               >
                 Save Purchase
               </button>
-              <button type="button" onClick={() => setShowForm(false)} style={{ background: roseGold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>
-                Cancel
-              </button>
             </div>
           </form>
         )}
 
-        {!showForm && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-              <input placeholder="Invoice no" value={fInvoice} onChange={e=>setFInvoice(e.target.value)} style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Vendor name" value={fVendor} onChange={e=>setFVendor(e.target.value)} style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Vendor ID" value={fVendorId} onChange={e=>setFVendorId(e.target.value)} type="number" style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-              <input type="date" value={fDateFrom} onChange={e=>setFDateFrom(e.target.value)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input type="date" value={fDateTo} onChange={e=>setFDateTo(e.target.value)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Product name" value={fProduct} onChange={e=>setFProduct(e.target.value)} style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Product ID" value={fProductId} onChange={e=>setFProductId(e.target.value)} type="number" style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Brand" value={fBrand} onChange={e=>setFBrand(e.target.value)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-            </div>
-
-            {purchases.length === 0 ? (
-              <p>No purchases yet.</p>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                {purchases
-                  .filter(p => !fInvoice || (p.invoice_no || '').toLowerCase().includes(fInvoice.toLowerCase()))
-                  .filter(p => !fVendor || (p.vendor_name || '').toLowerCase().includes(fVendor.toLowerCase()))
-                  .filter(p => !fVendorId || p.vendor_id === Number(fVendorId))
-                  .filter(p => !fDateFrom || new Date(p.date) >= new Date(fDateFrom))
-                  .filter(p => !fDateTo || new Date(p.date) <= new Date(fDateTo))
-                  .filter(p => !fProduct || p.items.some(it => products.find(pr => pr.product_id === it.product_id)?.product_name.toLowerCase().includes(fProduct.toLowerCase())))
-                  .filter(p => !fProductId || p.items.some(it => it.product_id === Number(fProductId)))
-                  .filter(p => !fBrand || p.items.some(it => (it.brand || '').toLowerCase().includes(fBrand.toLowerCase())))
-                  .map(p => (
-                    <div key={p.purchase_id} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <div style={{ fontWeight: 700, color: roseGold }}>Invoice: {p.invoice_no || '-'}</div>
-                        <div style={{ fontSize: 12, color: '#555' }}>Date: {new Date(p.date).toLocaleDateString()}</div>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>Vendor: {p.vendor_name || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>Total Bill: {p.bill_price?.toFixed?.(2) ?? p.bill_price}</div>
-                      {p.items.length === 0 ? (
-                        <div style={{ fontSize: 12, color: '#777' }}>No items</div>
-                      ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
-                          {p.items.map(it => (
-                            <div key={it.purchase_item_id} style={{ border: '1px solid #eee', borderRadius: 6, padding: 8 }}>
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                <div style={{ fontSize: 12 }}>Product ID: {it.product_id}</div>
-                                <div style={{ fontSize: 12 }}>Qty: {it.qty}</div>
-                                <div style={{ fontSize: 12 }}>Unit Price: {it.unit_price}</div>
-                                <div style={{ fontSize: 12 }}>Total: {it.total_price}</div>
-                                <div style={{ fontSize: 12 }}>Brand: {it.brand || '-'}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            )}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+             <h3 style={{ color: '#fff', margin: 0, marginRight: 12 }}>History</h3>
+             <input placeholder="Filter Invoice" value={fInvoice} onChange={e=>setFInvoice(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #555', background: '#444', color: '#fff' }} />
+             <input placeholder="Filter Vendor" value={fVendor} onChange={e=>setFVendor(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #555', background: '#444', color: '#fff' }} />
+             <input type="date" value={fDateFrom} onChange={e=>setFDateFrom(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #555', background: '#444', color: '#fff' }} />
+             <input type="date" value={fDateTo} onChange={e=>setFDateTo(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #555', background: '#444', color: '#fff' }} />
+             <input placeholder="Filter Product" value={fProduct} onChange={e=>setFProduct(e.target.value)} style={{ padding: 10, borderRadius: 6, border: '1px solid #555', background: '#444', color: '#fff' }} />
           </div>
-        )}
+
+          <div style={{ overflowX: 'auto', background: '#808080', borderRadius: 12, padding: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #666' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff' }}>
+              <thead>
+                <tr style={{ background: '#555' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Invoice</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Vendor</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700 }}>Amount</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPurchases.map(p => (
+                  <tr key={p.purchase_id} style={{ borderBottom: '1px solid #666' }}>
+                    <td style={{ padding: '12px 16px' }}>{p.date ? p.date.slice(0,10) : ''}</td>
+                    <td style={{ padding: '12px 16px' }}>{p.invoice_no}</td>
+                    <td style={{ padding: '12px 16px' }}>{p.vendor_name}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>{Number(p.bill_price).toFixed(2)}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      {p.items.map(it => {
+                         const prod = products.find(x => x.product_id === it.product_id);
+                         return (
+                           <div key={it.purchase_item_id} style={{ fontSize: '0.9em', marginBottom: 4 }}>
+                             • {prod?.product_name || `ID:${it.product_id}`} — {it.qty} {it.brand ? `(${it.brand})` : ''}
+                           </div>
+                         );
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                {filteredPurchases.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: 32, textAlign: 'center', color: '#ddd' }}>No purchases found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

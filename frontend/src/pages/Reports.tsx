@@ -5,10 +5,10 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const roseGold = '#b76e79';
-const roseGoldLight = '#d9a1aa';
-const gold = '#d4af37';
-const goldHover = '#c9a227';
+const roseGold = '#001f3f';
+const roseGoldLight = '#e0e0e0';
+const gold = '#001f3f';
+const goldHover = '#003366';
 const SHOP_NAME = 'Heaven_Bakers';
 
 export default function Reports() {
@@ -223,7 +223,7 @@ export default function Reports() {
         startY: y,
         theme: 'grid',
         styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
         margin: { top: 34, bottom: 16 }
       });
       y = (doc as any).lastAutoTable.finalY + 6;
@@ -246,7 +246,7 @@ export default function Reports() {
         startY: y + 2,
         theme: 'grid',
         styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
         margin: { top: 34, bottom: 16 }
       });
       y = (doc as any).lastAutoTable.finalY + 6;
@@ -273,7 +273,7 @@ export default function Reports() {
         startY: y + 2,
         theme: 'grid',
         styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
         margin: { top: 34, bottom: 16 }
       });
       y = (doc as any).lastAutoTable.finalY + 6;
@@ -288,7 +288,7 @@ export default function Reports() {
         startY: y,
         theme: 'grid',
         styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
         margin: { top: 34, bottom: 16 },
         didDrawPage: (data: any) => {
           const w = (doc as any).internal.pageSize.getWidth();
@@ -371,7 +371,7 @@ export default function Reports() {
       startY: y + 2,
       theme: 'grid',
       styles: { fontSize: 10, cellPadding: 2 },
-      headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+      headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
       margin: { top: 34, bottom: 16 }
     });
     y = (doc as any).lastAutoTable.finalY + 6;
@@ -398,7 +398,7 @@ export default function Reports() {
         startY: y + 2,
         theme: 'grid',
         styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [183, 110, 121], textColor: 255, halign: 'left' },
+        headStyles: { fillColor: [0, 31, 63], textColor: 255, halign: 'left' },
         margin: { top: 34, bottom: 16 }
       });
       y = (doc as any).lastAutoTable.finalY + 6;
@@ -443,7 +443,7 @@ export default function Reports() {
   }
 
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: '#333' }}>
       <div
         style={{
           display: 'flex',
@@ -452,7 +452,7 @@ export default function Reports() {
           padding: 12,
           position: 'sticky',
           top: 0,
-          background: `linear-gradient(90deg, ${roseGold}, ${roseGoldLight})`,
+          background: '#001f3f',
           color: '#fff',
           borderBottom: `1px solid ${roseGoldLight}`,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
@@ -490,8 +490,8 @@ export default function Reports() {
             cursor: 'pointer',
             boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
+          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }}
+          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}
         >
           Logout
         </button>
@@ -505,46 +505,46 @@ export default function Reports() {
                 key={r}
                 onClick={() => setReport(r)}
                 style={{
-                  background: report===r ? gold : '#fff',
-                  color: '#000',
-                  border: report===r ? 'none' : '1px solid #ddd',
+                  background: report===r ? gold : '#444',
+                  color: '#fff',
+                  border: report===r ? 'none' : '1px solid #555',
                   padding: '8px 16px',
                   borderRadius: 8,
                   fontWeight: 600,
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = report===r ? goldHover : '#f7f7f7'; e.currentTarget.style.color = '#000'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = report===r ? gold : '#fff'; e.currentTarget.style.color = '#000'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = report===r ? goldHover : '#555'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = report===r ? gold : '#444'; e.currentTarget.style.color = '#fff'; }}
               >
                 {r}
               </button>
             ))}
           </div>
-          <input type="date" value={from} onChange={e=>setFrom(e.target.value)} style={{ padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)' }} />
-          <input type="date" value={to} onChange={e=>setTo(e.target.value)} style={{ padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)' }} />
+          <input type="date" value={from} onChange={e=>setFrom(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff' }} />
+          <input type="date" value={to} onChange={e=>setTo(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff' }} />
           <div style={{ flex: 1 }} />
-          <button onClick={exportExcel} style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => (e.currentTarget.style.background = goldHover)} onMouseLeave={e => (e.currentTarget.style.background = gold)}>Download Excel</button>
-          <button onClick={exportPDF} style={{ background: roseGold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>Download PDF</button>
-          <button onClick={exportSalesDetailed} style={{ display: report==='Sales' ? 'inline-block' : 'none', background: '#444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>Download Sales Detailed PDF</button>
+          <button onClick={exportExcel} style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff'; }}>Download Excel</button>
+          <button onClick={exportPDF} style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff'; }}>Download PDF</button>
+          <button onClick={exportSalesDetailed} style={{ display: report==='Sales' ? 'inline-block' : 'none', background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff'; }}>Download Sales Detailed PDF</button>
         </div>
 
         <div style={{ display: report==='Summary' ? 'grid' : 'none', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, ${roseGoldLight}, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-            <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Sales Total</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#333' }}>Rs. {fmt(salesTotal)}</div>
+          <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+            <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Sales Total</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(salesTotal)}</div>
           </div>
-          <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #f8e7a5, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-            <div style={{ color: gold, fontWeight: 700, opacity: 0.9 }}>Expenses Total</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#333' }}>Rs. {fmt(expensesTotal)}</div>
+          <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+            <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Expenses Total</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(expensesTotal)}</div>
           </div>
-          <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #d9a1aa, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-            <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Profit Total</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#333' }}>Rs. {fmt(profitTotal)}</div>
+          <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+            <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Profit Total</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(profitTotal)}</div>
           </div>
-          <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #e6f0ff, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-            <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Purchases Total</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#333' }}>Rs. {fmt(purchasesTotal)}</div>
+          <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+            <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Purchases Total</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(purchasesTotal)}</div>
           </div>
         </div>
 
@@ -583,37 +583,37 @@ export default function Reports() {
             return (
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
-                  <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, ${roseGoldLight}, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-                    <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Sales Total</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#333' }}>Rs. {fmt(salesTotal)}</div>
+                  <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                    <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Sales Total</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Rs. {fmt(salesTotal)}</div>
                   </div>
-                  <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #d9a1aa, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-                    <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Profit Total</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#333' }}>Rs. {fmt(profitTotal)}</div>
+                  <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                    <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Profit Total</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Rs. {fmt(profitTotal)}</div>
                   </div>
-                  <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #f7f7f7, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-                    <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Invoices</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#333' }}>{invoiceCount}</div>
+                  <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                    <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Invoices</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{invoiceCount}</div>
                   </div>
-                  <div style={{ padding: 18, borderRadius: 14, background: `linear-gradient(135deg, #e6f0ff, #fff)`, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-                    <div style={{ color: roseGold, fontWeight: 700, opacity: 0.9 }}>Avg/Invoice</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#333' }}>Rs. {fmt(avgInvoice)}</div>
+                  <div style={{ padding: 18, borderRadius: 14, background: '#808080', border: '1px solid #555', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                    <div style={{ color: '#fff', fontWeight: 700, opacity: 0.9 }}>Avg/Invoice</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Rs. {fmt(avgInvoice)}</div>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontWeight: 700, color: roseGold, marginBottom: 6 }}>By Day</div>
+                  <div style={{ fontWeight: 700, color: '#fff', marginBottom: 6 }}>By Day</div>
                   {byDay.length === 0 ? (
-                    <div style={{ fontSize: 12, color: '#777' }}>No data</div>
+                    <div style={{ fontSize: 12, color: '#ccc' }}>No data</div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                       {byDay.map(d => (
-                        <div key={d.date} style={{ borderRadius: 8, padding: 12, background: '#fff' }}>
+                        <div key={d.date} style={{ borderRadius: 8, padding: 12, background: '#808080', border: '1px solid #555' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div style={{ fontWeight: 600 }}>{new Date(d.date).toLocaleDateString()}</div>
-                            <div style={{ fontSize: 12 }}>Invoices: {d.invoices}</div>
+                            <div style={{ fontWeight: 600, color: '#fff' }}>{new Date(d.date).toLocaleDateString()}</div>
+                            <div style={{ fontSize: 12, color: '#fff' }}>Invoices: {d.invoices}</div>
                           </div>
-                          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#555' }}>
+                          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#ccc' }}>
                             <div>Total: {fmt(d.total)}</div>
                             <div>Profit: {fmt(d.profit)}</div>
                           </div>
@@ -624,18 +624,18 @@ export default function Reports() {
                 </div>
 
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontWeight: 700, color: roseGold, marginBottom: 6 }}>By Product</div>
+                  <div style={{ fontWeight: 700, color: '#fff', marginBottom: 6 }}>By Product</div>
                   {byProduct.length === 0 ? (
-                    <div style={{ fontSize: 12, color: '#777' }}>No data</div>
+                    <div style={{ fontSize: 12, color: '#ccc' }}>No data</div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                       {byProduct.map(p => (
-                        <div key={p.product} style={{ borderRadius: 8, padding: 12, background: '#fff' }}>
+                        <div key={p.product} style={{ borderRadius: 8, padding: 12, background: '#808080', border: '1px solid #555' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div style={{ fontWeight: 600 }}>{p.product}</div>
-                            <div style={{ fontSize: 12 }}>Qty: {p.qty}</div>
+                            <div style={{ fontWeight: 600, color: '#fff' }}>{p.product}</div>
+                            <div style={{ fontSize: 12, color: '#fff' }}>Qty: {p.qty}</div>
                           </div>
-                          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#555' }}>
+                          <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#ccc' }}>
                             <div>Revenue: {fmt(p.revenue)}</div>
                             <div>Profit: {fmt(p.profit)}</div>
                           </div>
@@ -652,12 +652,12 @@ export default function Reports() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
               {(currentRows() as any[]).map((r, idx) => (
-                <div key={idx} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
+                <div key={idx} style={{ borderRadius: 8, padding: 12, background: '#808080', border: '1px solid #555' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 600 }}>{r.invoice}</div>
-                    <div style={{ fontSize: 12 }}>{r.date}</div>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{r.invoice}</div>
+                    <div style={{ fontSize: 12, color: '#ccc' }}>{r.date}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#555' }}>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#ccc' }}>
                     <div>Total: {fmt(r.total)}</div>
                     <div>Items: {r.items}</div>
                     <div>Profit: {fmt(r.profit)}</div>
@@ -674,12 +674,12 @@ export default function Reports() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
               {(currentRows() as any[]).map((r, idx) => (
-                <div key={idx} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
+                <div key={idx} style={{ borderRadius: 8, padding: 12, background: '#808080', border: '1px solid #555' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 600 }}>{r.invoice}</div>
-                    <div style={{ fontSize: 12 }}>{r.date}</div>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{r.invoice}</div>
+                    <div style={{ fontSize: 12, color: '#ccc' }}>{r.date}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#555' }}>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#ccc' }}>
                     <div>Vendor: {r.vendor}</div>
                     <div>Total Bill: {fmt(r.total)}</div>
                   </div>
@@ -695,12 +695,12 @@ export default function Reports() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
               {(currentRows() as any[]).map((r, idx) => (
-                <div key={idx} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
+                <div key={idx} style={{ borderRadius: 8, padding: 12, background: '#808080', border: '1px solid #555' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 600 }}>{r.product}</div>
-                    <div style={{ fontSize: 12 }}>{r.brand}</div>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{r.product}</div>
+                    <div style={{ fontSize: 12, color: '#ccc' }}>{r.brand}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#555' }}>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#ccc' }}>
                     <div>Vendor: {r.vendor}</div>
                     <div>Qty: {r.qty}</div>
                   </div>

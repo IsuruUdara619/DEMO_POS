@@ -4,6 +4,7 @@ import cors from 'cors';
 import { pool, ensurePool } from './src/db';
 import { Pool } from 'pg';
 import authRouter from './src/routes/auth';
+import usersRouter from './src/routes/users';
 import productsRouter from './src/routes/products';
 import barcodeRouter from './src/routes/barcode';
 import vendorsRouter from './src/routes/vendors';
@@ -13,12 +14,21 @@ import salesRouter from './src/routes/sales';
 import expensesRouter from './src/routes/expenses';
 import customersRouter from './src/routes/customers';
 import loyaltyRouter from './src/routes/loyalty';
+import printRouter from './src/routes/print';
+import whatsappRouter from './src/routes/whatsapp';
+import logsRouter from './src/routes/logs';
+import errorLogger from './src/middleware/errorLogger';
 import bcrypt from 'bcryptjs';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Add request logging middleware
+app.use(errorLogger.requestLogger());
+
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/barcode', barcodeRouter);
 app.use('/api/vendors', vendorsRouter);
@@ -28,11 +38,17 @@ app.use('/api/sales', salesRouter);
 app.use('/api/expenses', expensesRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/loyalty', loyaltyRouter);
+app.use('/api/print', printRouter);
+app.use('/api/whatsapp', whatsappRouter);
+app.use('/api/logs', logsRouter);
+
+// Add error handling middleware (must be last)
+app.use(errorLogger.errorHandler());
 
 const port = process.env.PORT ? Number(process.env.PORT) : 5000;
 
 async function init() {
-  ensurePool();
+  await ensurePool();
   const targetUrl = process.env.DATABASE_URL;
   if (!targetUrl) throw new Error('DATABASE_URL is required');
   const urlObj = new URL(targetUrl);
@@ -45,9 +61,13 @@ async function init() {
     CREATE TABLE IF NOT EXISTS users (
       user_id SERIAL PRIMARY KEY,
       username VARCHAR(100) UNIQUE NOT NULL,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      role VARCHAR(20) DEFAULT 'cashier' CHECK (role IN ('admin', 'manager', 'cashier'))
     )
     `);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'cashier'`);
+    await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
+    await pool.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'cashier'))`);
     await pool.query(`
     CREATE TABLE IF NOT EXISTS products (
       product_id SERIAL PRIMARY KEY,
@@ -200,9 +220,13 @@ async function init() {
         CREATE TABLE IF NOT EXISTS users (
           user_id SERIAL PRIMARY KEY,
           username VARCHAR(100) UNIQUE NOT NULL,
-          password TEXT NOT NULL
+          password TEXT NOT NULL,
+          role VARCHAR(20) DEFAULT 'cashier' CHECK (role IN ('admin', 'manager', 'cashier'))
         )
       `);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'cashier'`);
+      await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
+      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'cashier'))`);
       await pool.query(`
         CREATE TABLE IF NOT EXISTS products (
           product_id SERIAL PRIMARY KEY,
@@ -348,9 +372,9 @@ async function init() {
   if (username && password) {
     const hash = await bcrypt.hash(password, 10);
     await pool.query(
-      `INSERT INTO users (username, password) VALUES ($1, $2)
-       ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password`,
-      [username, hash]
+      `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)
+       ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role`,
+      [username, hash, 'admin']
     );
   }
 }

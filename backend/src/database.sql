@@ -4,7 +4,8 @@
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    role VARCHAR(20) DEFAULT 'cashier' CHECK (role IN ('admin', 'manager', 'cashier'))
 );
 
 -- ==========================
@@ -86,7 +87,8 @@ CREATE TABLE sales (
     date TIMESTAMP DEFAULT NOW(),
     total_amount NUMERIC(12,2),
     discount NUMERIC(10,2),
-    note TEXT
+    note TEXT,
+    payment_type VARCHAR(50)
 );
 
 -- ==========================
@@ -125,4 +127,3 @@ CREATE TABLE barcode (
     barcode VARCHAR(200) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
-

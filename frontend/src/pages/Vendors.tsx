@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { post, get, put } from '../services/api';
+import Layout from '../components/Layout';
 
 export default function Vendors() {
   const navigate = useNavigate();
-  const roseGold = '#b76e79';
-  const roseGoldLight = '#d9a1aa';
-  const gold = '#d4af37';
-  const goldHover = '#c9a227';
+  const roseGold = '#001f3f';
+  const roseGoldLight = '#e0e0e0';
+  const gold = '#001f3f';
+  const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -22,11 +23,6 @@ export default function Vendors() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingMode, setEditingMode] = useState(false);
 
-  function logout() {
-    localStorage.removeItem('token');
-    navigate('/login', { replace: true });
-  }
-  function goHome() { navigate('/dashboard'); }
   function toggleForm() { setShowForm(v => !v); }
 
   function startEdit(v: { vendor_id: number; name: string; contact_no1: string | null; contact_no2: string | null; email: string | null; address: string | null }) {
@@ -72,61 +68,11 @@ export default function Vendors() {
   }
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          padding: 12,
-          position: 'sticky',
-          top: 0,
-          background: `linear-gradient(90deg, ${roseGold}, ${roseGoldLight})`,
-          color: '#fff',
-          borderBottom: `1px solid ${roseGoldLight}`,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Vendors</div>
-        
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={goHome}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Home
-        </button>
-        <button
-          onClick={logout}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Logout
-        </button>
-      </div>
-
+    <Layout backgroundColor="#808080">
       <div style={{ padding: 24 }}>
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ color: '#fff', fontSize: 36, fontWeight: 900, margin: 0 }}>Vendors</h2>
+        </div>
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={toggleForm}
@@ -139,39 +85,39 @@ export default function Vendors() {
         </div>
 
         {showForm && (
-          <form onSubmit={submit} style={{ borderRadius: 12, padding: 16, width: '100%', maxWidth: 520, background: 'linear-gradient(135deg, #f8e7a5, #fff)', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', boxSizing: 'border-box', marginBottom: 16 }}>
-            {error && (<div style={{ color: 'red', marginBottom: 12 }}>{error}</div>)}
+          <form onSubmit={submit} style={{ borderRadius: 12, padding: 16, width: '100%', maxWidth: 520, background: '#808080', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', boxSizing: 'border-box', marginBottom: 16, color: '#fff' }}>
+            {error && (<div style={{ color: '#ff5252', marginBottom: 12 }}>{error}</div>)}
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', marginBottom: 6 }}>Name</label>
-              <input value={name} onChange={e=>setName(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} required />
+              <input value={name} onChange={e=>setName(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} required />
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 6 }}>Contact No 1</label>
-                <input value={contact1} onChange={e=>setContact1(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <input value={contact1} onChange={e=>setContact1(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: 6 }}>Contact No 2</label>
-                <input value={contact2} onChange={e=>setContact2(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+                <input value={contact2} onChange={e=>setContact2(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', marginBottom: 6 }}>Email</label>
-              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box' }} />
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', marginBottom: 6 }}>Address</label>
-              <textarea value={address} onChange={e=>setAddress(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box', minHeight: 80 }} />
+              <textarea value={address} onChange={e=>setAddress(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box', minHeight: 80 }} />
             </div>
-            <button type="submit" style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => (e.currentTarget.style.background = goldHover)} onMouseLeave={e => (e.currentTarget.style.background = gold)}>{editingMode ? 'Update Vendor' : 'Save Vendor'}</button>
+            <button type="submit" style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff'; }}>{editingMode ? 'Update Vendor' : 'Save Vendor'}</button>
           </form>
         )}
 
         {!showForm && (
           <div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-              <input placeholder="Search by name" value={filterText} onChange={e=>setFilterText(e.target.value)} style={{ flex: 2, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
-              <input placeholder="Search by ID" value={filterId} onChange={e=>setFilterId(e.target.value)} type="number" style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #f7f7f7, #ffffff)', boxSizing: 'border-box' }} />
+              <input placeholder="Search by name" value={filterText} onChange={e=>setFilterText(e.target.value)} style={{ flex: 2, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
+              <input placeholder="Search by ID" value={filterId} onChange={e=>setFilterId(e.target.value)} type="number" style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box' }} />
             </div>
             {vendors.length === 0 ? (
               <p>No vendors yet.</p>
@@ -181,12 +127,12 @@ export default function Vendors() {
                   .filter(v => !filterText || v.name.toLowerCase().includes(filterText.toLowerCase()))
                   .filter(v => !filterId || v.vendor_id === Number(filterId))
                   .map(v => (
-                    <div key={v.vendor_id} onClick={() => startEdit(v)} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)', cursor: 'pointer' }}>
-                      <div style={{ fontWeight: 700, color: roseGold }}>{v.name}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Contact 1: {v.contact_no1 || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Contact 2: {v.contact_no2 || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Email: {v.email || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Address: {v.address || '-'}</div>
+                    <div key={v.vendor_id} onClick={() => startEdit(v)} style={{ borderRadius: 8, padding: 12, background: '#808080', cursor: 'pointer', border: '1px solid #555' }}>
+                      <div style={{ fontWeight: 700, color: '#fff' }}>{v.name}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Contact 1: {v.contact_no1 || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Contact 2: {v.contact_no2 || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Email: {v.email || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Address: {v.address || '-'}</div>
                     </div>
                   ))}
               </div>
@@ -194,6 +140,6 @@ export default function Vendors() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

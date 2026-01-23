@@ -1,12 +1,20 @@
 import { Pool } from 'pg';
 
-export let pool: Pool;
+// Create a new pool instance using the connection string from environment variables
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
-export function ensurePool() {
-  if (!pool) {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error('DATABASE_URL is required');
-    pool = new Pool({ connectionString: url });
+// Function to ensure the pool is connected/ready (mostly for compatibility with previous logic)
+export async function ensurePool() {
+  try {
+    // Test connection
+    const client = await pool.connect();
+    console.log('Successfully connected to PostgreSQL database.');
+    client.release();
+    return pool;
+  } catch (err) {
+    console.error('Error connecting to PostgreSQL database:', err);
+    throw err;
   }
-  return pool;
 }

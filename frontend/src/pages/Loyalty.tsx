@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { get } from '../services/api'
 
-const roseGold = '#b76e79'
-const roseGoldLight = '#d9a1aa'
-const gold = '#d4af37'
-const goldHover = '#c9a227'
+const roseGold = '#001f3f'
+const roseGoldLight = '#e0e0e0'
+const gold = '#001f3f'
+const goldHover = '#003366'
 
 export default function Loyalty() {
   const navigate = useNavigate()
@@ -27,11 +27,11 @@ export default function Loyalty() {
     })()
   }, [navigate])
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: '#333' }}>
       <div style={{
         display: 'flex', gap: 12, alignItems: 'center', padding: 12,
         position: 'sticky', top: 0,
-        background: `linear-gradient(90deg, ${roseGold}, ${roseGoldLight})`,
+        background: '#001f3f',
         color: '#fff', borderBottom: `1px solid ${roseGoldLight}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
@@ -70,12 +70,12 @@ export default function Loyalty() {
                   .filter(c => !qName || String(c.name || '').toLowerCase().includes(qName.toLowerCase()))
                   .filter(c => !qMobile || String(c.mobile_no || '').toLowerCase().includes(qMobile.toLowerCase()))
                   .map(c => (
-                    <div key={c.loyalty_customer_id} style={{ borderRadius: 8, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)' }}>
-                      <div style={{ fontWeight: 700, color: roseGold }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Mobile: {c.mobile_no || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>NIC: {c.nic || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Address: {c.address || '-'}</div>
-                      <div style={{ fontSize: 12, color: '#555' }}>Joined: {c.joined_date ? new Date(c.joined_date).toLocaleDateString() : '-'}</div>
+                    <div key={c.loyalty_customer_id} style={{ borderRadius: 8, padding: 12, background: '#808080', color: '#fff' }}>
+                      <div style={{ fontWeight: 700, color: '#fff' }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Mobile: {c.mobile_no || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>NIC: {c.nic || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Address: {c.address || '-'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>Joined: {c.joined_date ? new Date(c.joined_date).toLocaleDateString() : '-'}</div>
                     </div>
                   ))}
               </div>
@@ -83,16 +83,16 @@ export default function Loyalty() {
           </div>
           <div>
             <div style={{ fontWeight: 700, color: roseGold, marginBottom: 8 }}>Promotions</div>
-            <div style={{ border: `1px solid ${roseGoldLight}`, borderRadius: 12, padding: 12, background: 'linear-gradient(135deg, #f8e7a5, #fff)', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
-              <div style={{ marginBottom: 8, fontWeight: 600, color: '#333' }}>Select Phone Numbers</div>
-              <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 8, marginBottom: 10 }}>
+            <div style={{ border: `1px solid ${roseGoldLight}`, borderRadius: 12, padding: 12, background: '#808080', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+              <div style={{ marginBottom: 8, fontWeight: 600, color: '#fff' }}>Select Phone Numbers</div>
+              <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #555', borderRadius: 8, padding: 8, marginBottom: 10, background: '#444' }}>
                 {customers.filter(c => !!c.mobile_no).length === 0 ? (
-                  <div style={{ fontSize: 12, color: '#777' }}>No mobiles available</div>
+                  <div style={{ fontSize: 12, color: '#ccc' }}>No mobiles available</div>
                 ) : (
                   customers
                     .filter(c => !!c.mobile_no)
                     .map(c => (
-                      <label key={c.loyalty_customer_id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <label key={c.loyalty_customer_id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, color: '#fff' }}>
                         <input type="checkbox" onChange={e=>{
                           const v = String(c.mobile_no)
                           if (e.target.checked) {
@@ -106,15 +106,15 @@ export default function Loyalty() {
                     ))
                 )}
               </div>
-              <div style={{ marginBottom: 8, fontWeight: 600, color: '#333' }}>Message</div>
-              <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Type promotion message" style={{ width: '100%', minHeight: 120, padding: 10, borderRadius: 8, border: '1px solid #ddd', boxSizing: 'border-box', resize: 'vertical' }} />
+              <div style={{ marginBottom: 8, fontWeight: 600, color: '#fff' }}>Message</div>
+              <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Type promotion message" style={{ width: '100%', minHeight: 120, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#444', color: '#fff', boxSizing: 'border-box', resize: 'vertical' }} />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
-                <button onClick={()=>{ setSelected([]); setMessage('') }} style={{ background: '#eee', color: '#333', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+                <button onClick={()=>{ setSelected([]); setMessage('') }} style={{ background: '#555', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
                 <button onClick={()=>{
                   if (selected.length === 0) { alert('Select at least one phone'); return }
                   if (!message.trim()) { alert('Enter a message'); return }
                   alert(`Prepared promotion to ${selected.length} numbers`) 
-                }} style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = goldHover)} onMouseLeave={e => (e.currentTarget.style.background = gold)}>Send Promotion</button>
+                }} style={{ background: gold, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff'; }}>Send Promotion</button>
               </div>
             </div>
           </div>
