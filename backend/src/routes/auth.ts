@@ -5,6 +5,28 @@ import jwt from 'jsonwebtoken';
 
 const router = Router();
 
+// Health check endpoint
+router.get('/health', async (req, res) => {
+  try {
+    // Verify database connectivity with a simple query
+    await pool.query('SELECT 1');
+    res.status(200).json({
+      status: 'ok',
+      service: 'auth',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error: any) {
+    console.error('Health check failed:', error);
+    res.status(503).json({
+      status: 'error',
+      service: 'auth',
+      timestamp: new Date().toISOString(),
+      message: error?.message || 'Service unavailable'
+    });
+  }
+});
+
 router.post('/login', async (req, res) => {
   const { username, password } = req.body as { username: string; password: string };
   if (!username || !password) {

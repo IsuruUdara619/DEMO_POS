@@ -39,6 +39,15 @@ desktop.ini
 postgres_data/
 whatsapp_data/
 
+# Database data
+pglite-data/
+
+# WhatsApp session data
+backend/data/.wwebjs_auth/
+
+# Frontend build
+frontend-build/
+
 # Temporary files
 *.tmp
 *.temp

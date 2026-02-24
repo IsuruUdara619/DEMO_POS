@@ -36,7 +36,7 @@ function Protected({ children, allowedRoles }: { children: JSX.Element; allowedR
 }
 
 export default function App() {
-  const bg = '#808080';
+  const bg = '#edf8e9';
   return (
     <div style={{ background: bg, minHeight: '100vh', color: '#fff' }}>
       <Routes>

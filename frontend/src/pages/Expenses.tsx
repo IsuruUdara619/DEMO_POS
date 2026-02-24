@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get, post } from '../services/api';
+import Layout from '../components/Layout';
 
-const roseGold = '#001f3f';
+const roseGold = '#31a354';
 const roseGoldLight = '#e0e0e0';
-const gold = '#001f3f';
+const gold = '#31a354';
 const goldHover = '#003366';
 
 export default function Expenses() {
@@ -15,9 +16,6 @@ export default function Expenses() {
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
   const [expenses, setExpenses] = useState<Array<{ expense_id: number; name: string; amount: number; note: string | null }>>([]);
-
-  function logout() { localStorage.removeItem('token'); navigate('/login', { replace: true }); }
-  function goHome() { navigate('/dashboard'); }
 
   useEffect(() => {
     (async () => {
@@ -45,18 +43,11 @@ export default function Expenses() {
   }
 
   return (
-    <div>
-      <div style={{
-        display: 'flex', gap: 12, alignItems: 'center', padding: 12, position: 'sticky', top: 0,
-        background: '#001f3f', color: '#fff', borderBottom: `1px solid ${roseGoldLight}`, boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-      }}>
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Expenses</div>
-        
-        <div style={{ flex: 1 }} />
-        <button onClick={goHome} style={{ background: gold, color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 8, fontWeight: 800, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}>Home</button>
-        <button onClick={logout} style={{ background: gold, color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 8, fontWeight: 800, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }} onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}>Logout</button>
-      </div>
-      <div style={{ padding: 24 }}>
+    <Layout>
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700 }}>Expenses</h2>
+        </div>
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={() => setShowForm(v => !v)}
@@ -68,7 +59,7 @@ export default function Expenses() {
           </button>
         </div>
         {showForm && (
-          <form onSubmit={submit} style={{ borderRadius: 12, padding: 16, width: '100%', maxWidth: 520, background: '#808080', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', boxSizing: 'border-box', marginBottom: 16, color: '#fff' }}>
+          <form onSubmit={submit} style={{ borderRadius: 12, padding: 16, width: '100%', maxWidth: 520, background: '#808080 ', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', boxSizing: 'border-box', marginBottom: 16, color: '#fff' }}>
             {error && (<div style={{ color: 'red', marginBottom: 12 }}>{error}</div>)}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ marginBottom: 12 }}>
@@ -101,7 +92,7 @@ export default function Expenses() {
               <div style={{ fontSize: 12, color: '#ccc' }}>No expenses yet</div>
             ) : (
               expenses.slice(0, 20).map(ex => (
-                <div key={ex.expense_id} style={{ borderRadius: 8, padding: 12, background: '#808080', marginBottom: 8, color: '#fff' }}>
+                <div key={ex.expense_id} style={{ borderRadius: 8, padding: 12, background: '#808080 ', marginBottom: 8, color: '#fff' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <div style={{ fontWeight: 600 }}>{ex.name}</div>
                     <div style={{ fontSize: 12, color: '#ccc' }}>{ex.amount?.toFixed?.(2) ?? ex.amount}</div>
@@ -113,6 +104,6 @@ export default function Expenses() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

@@ -15,8 +15,9 @@ import expensesRouter from './src/routes/expenses';
 import customersRouter from './src/routes/customers';
 import loyaltyRouter from './src/routes/loyalty';
 import printRouter from './src/routes/print';
-import whatsappRouter from './src/routes/whatsapp';
 import logsRouter from './src/routes/logs';
+import printerSettingsRouter from './src/routes/printerSettings';
+import diagnosticsRouter from './src/routes/diagnostics';
 import errorLogger from './src/middleware/errorLogger';
 import bcrypt from 'bcryptjs';
 
@@ -39,8 +40,9 @@ app.use('/api/expenses', expensesRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/loyalty', loyaltyRouter);
 app.use('/api/print', printRouter);
-app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/logs', logsRouter);
+app.use('/api/printer-settings', printerSettingsRouter);
+app.use('/api/diagnostics', diagnosticsRouter);
 
 // Add error handling middleware (must be last)
 app.use(errorLogger.errorHandler());
@@ -48,14 +50,38 @@ app.use(errorLogger.errorHandler());
 const port = process.env.PORT ? Number(process.env.PORT) : 5000;
 
 async function init() {
-  await ensurePool();
-  const targetUrl = process.env.DATABASE_URL;
-  if (!targetUrl) throw new Error('DATABASE_URL is required');
-  const urlObj = new URL(targetUrl);
-  const dbName = urlObj.pathname.slice(1);
-  const adminUrl = new URL(targetUrl);
-  adminUrl.pathname = '/postgres';
+  console.log('🔧 Initializing backend server...');
+  
+  console.log('📊 Environment:', {
+    DATABASE_URL: process.env.DATABASE_URL ? '***configured***' : 'NOT SET',
+    JWT_SECRET: process.env.JWT_SECRET ? '***configured***' : 'NOT SET',
+    PORT: port
+  });
 
+  try {
+    await ensurePool();
+    console.log('✅ Database pool initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize database pool:', error);
+    throw new Error(`Database pool initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+  const targetUrl = process.env.DATABASE_URL;
+  if (!targetUrl) {
+    throw new Error('DATABASE_URL environment variable is not set. Please configure database connection.');
+  }
+
+  let urlObj, dbName, adminUrl;
+  try {
+    urlObj = new URL(targetUrl);
+    dbName = urlObj.pathname.slice(1);
+    adminUrl = new URL(targetUrl);
+    adminUrl.pathname = '/postgres';
+    console.log('📂 Database:', dbName);
+  } catch (error) {
+    throw new Error(`Invalid DATABASE_URL format: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  console.log('🗄️  Creating database tables...');
   try {
     await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -211,7 +237,40 @@ async function init() {
     await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS remaining_qty NUMERIC(12,2)`);
     await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10,2)`);
     await pool.query(`UPDATE purchase_items SET remaining_qty = qty WHERE remaining_qty IS NULL`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS printer_settings (
+        setting_id SERIAL PRIMARY KEY,
+        printer_name VARCHAR(255) DEFAULT 'XP-80C',
+        font_header INTEGER DEFAULT 13,
+        font_items INTEGER DEFAULT 6,
+        font_subtotal INTEGER DEFAULT 6,
+        font_total INTEGER DEFAULT 8,
+        font_payment INTEGER DEFAULT 7,
+        margin_top INTEGER DEFAULT 10,
+        margin_bottom INTEGER DEFAULT 10,
+        footer_spacing INTEGER DEFAULT 20,
+        paper_height INTEGER DEFAULT 842,
+        line_spacing INTEGER DEFAULT 12,
+        align_header VARCHAR(10) DEFAULT 'center',
+        align_items VARCHAR(10) DEFAULT 'left',
+        align_totals VARCHAR(10) DEFAULT 'right',
+        align_payment VARCHAR(10) DEFAULT 'left',
+        align_footer VARCHAR(10) DEFAULT 'center',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`
+      INSERT INTO printer_settings (
+        printer_name, font_header, font_items, font_subtotal, font_total, font_payment,
+        margin_top, margin_bottom, footer_spacing, paper_height, line_spacing,
+        align_header, align_items, align_totals, align_payment, align_footer
+      )
+      SELECT 'XP-80C', 13, 6, 6, 8, 7, 10, 10, 20, 842, 12, 'center', 'left', 'right', 'left', 'center'
+      WHERE NOT EXISTS (SELECT 1 FROM printer_settings LIMIT 1)
+    `);
+    console.log('✅ All database tables created successfully');
   } catch (e: any) {
+    console.error('❌ Error creating tables:', e.message);
     if (e?.message && /does not exist/i.test(e.message)) {
       const adminPool = new Pool({ connectionString: adminUrl.toString() });
       await adminPool.query(`CREATE DATABASE "${dbName}"`);
@@ -362,26 +421,46 @@ async function init() {
       await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS remaining_qty NUMERIC(12,2)`);
       await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10,2)`);
       await pool.query(`UPDATE purchase_items SET remaining_qty = qty WHERE remaining_qty IS NULL`);
+      console.log('✅ Database created and tables initialized');
     } else {
+      console.error('❌ Unexpected database error:', e);
       throw e;
     }
   }
 
+  console.log('👤 Setting up admin user...');
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
   if (username && password) {
-    const hash = await bcrypt.hash(password, 10);
-    await pool.query(
-      `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)
-       ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role`,
-      [username, hash, 'admin']
-    );
+    try {
+      const hash = await bcrypt.hash(password, 10);
+      await pool.query(
+        `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)
+         ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role`,
+        [username, hash, 'admin']
+      );
+      console.log(`✅ Admin user '${username}' configured`);
+    } catch (error) {
+      console.error('❌ Failed to setup admin user:', error);
+      throw new Error(`Admin user setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  } else {
+    console.warn('⚠️  Admin credentials not configured');
   }
+
+  console.log('✅ Backend initialization complete');
 }
 
 init().then(() => {
-  app.listen(port, () => { console.log(`Server listening on ${port}`); });
+  app.listen(port, () => { 
+    console.log(`✅ Server listening on port ${port}`);
+    console.log(`🚀 Backend server ready`);
+  });
 }).catch((e) => {
-  console.error('Init error', e);
-  app.listen(port, () => { console.log(`Server listening on ${port}`); });
+  console.error('❌ Backend initialization failed:', e);
+  console.error('Stack trace:', e.stack);
+  // Still try to start the server but log the error prominently
+  app.listen(port, () => { 
+    console.log(`⚠️  Server started on port ${port} but initialization had errors`);
+  });
 });

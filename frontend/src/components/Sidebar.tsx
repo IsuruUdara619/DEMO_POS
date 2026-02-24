@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import logoImage from '/BLOOM_SWIFT_POS_LOGO_XS_T.png';
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -15,12 +16,6 @@ export default function Sidebar() {
   }, []);
 
   const navItems = [
-    { 
-      label: 'Home', 
-      path: '/', 
-      role: 'all',
-      icon: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    },
     { 
       label: 'Dashboard', 
       path: '/dashboard', 
@@ -85,7 +80,7 @@ export default function Sidebar() {
 
   const btnGrad = 'transparent';
   const btnHoverGrad = '#f0f2f5';
-  const sidebarBg = '#001f3f'; // Navy Blue
+  const sidebarBg = '#31a354'; 
 
   return (
     <div style={{
@@ -110,14 +105,13 @@ export default function Sidebar() {
       <div style={{ marginBottom: 30, display: 'flex', flexDirection: isCollapsed ? 'column' : 'row', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'space-between', gap: isCollapsed ? 15 : 0, paddingLeft: isCollapsed ? 0 : 10 }}>
         {!isCollapsed ? (
            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src="/wh_logo.png" alt="WH" style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 2 }} />
+              <img src={logoImage} alt="Bloom Swift POS" style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 2 }} />
               <div>
-                 <h2 style={{ margin: 0, color: '#fff', fontSize: 16, lineHeight: 1.2, fontWeight: 700 }}>Weerasingha</h2>
-                 <h2 style={{ margin: 0, color: '#bbb', fontSize: 14, lineHeight: 1.2, fontWeight: 500 }}>Hardware</h2>
+                 <h2 style={{ margin: 0, color: '#fff', fontSize: 16, lineHeight: 1.2, fontWeight: 700, fontFamily: 'ITC Avant Garde Gothic Demi Condensed, sans-serif' }}>Bloom Swift POS</h2>
               </div>
            </div>
         ) : (
-           <img src="/wh_logo.png" alt="WH" style={{ height: 32, width: 32, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 2 }} />
+           <img src={logoImage} alt="Bloom Swift POS" style={{ height: 32, width: 32, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 2 }} />
         )}
         <div 
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -153,7 +147,7 @@ export default function Sidebar() {
               title={isCollapsed ? item.label : ''}
               style={{
                 background: isActive ? btnHoverGrad : btnGrad,
-                color: isActive ? '#001f3f' : '#fff',
+                color: isActive ? '#31a354' : '#fff',
                 border: 'none',
                 padding: '12px 16px',
                 borderRadius: 12,
@@ -188,6 +182,50 @@ export default function Sidebar() {
             </button>
           );
         })}
+      </div>
+
+      {/* Logout Button at Bottom */}
+      <div style={{ paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 10 }}>
+        <button
+          onClick={() => {
+            // Clear all authentication data
+            localStorage.clear();
+            // Navigate to login page
+            navigate('/');
+          }}
+          title={isCollapsed ? 'Logout' : ''}
+          style={{
+            background: btnGrad,
+            color: '#fff',
+            border: 'none',
+            padding: '12px 16px',
+            borderRadius: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            textAlign: isCollapsed ? 'center' : 'left',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: 12,
+            width: '100%'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255,0,0,0.2)';
+            if (!isCollapsed) e.currentTarget.style.transform = 'translateX(5px)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = btnGrad;
+            if (!isCollapsed) e.currentTarget.style.transform = 'none';
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ minWidth: 20 }}>
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          {!isCollapsed && <span style={{ whiteSpace: 'nowrap' }}>Logout</span>}
+        </button>
       </div>
     </div>
   );

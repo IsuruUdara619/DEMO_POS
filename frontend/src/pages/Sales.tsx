@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../services/api';
+import Layout from '../components/Layout';
 
-const roseGold = '#001f3f';
+const roseGold = '#31a354';
 const roseGoldLight = '#e0e0e0';
-const gold = '#001f3f';
+const gold = '#31a354';
 const goldHover = '#003366';
 
 export default function Sales() {
@@ -382,6 +383,32 @@ export default function Sales() {
     return Math.ceil(n / 5) * 5;
   }
 
+  // Unified function to calculate total amount with all discounts applied
+  function calculateTotalAmount(itemsList: typeof items, discountPercent: string, isLoyalty: boolean): number {
+    const sum = itemsList.reduce((acc, it) => {
+      const qtyNum = Number(it.qty || 0);
+      const effectiveQty = (it.sku || '') === 'Grams' ? (it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum) : qtyNum;
+      let lineTotal = 0;
+      if ((it.sku || '') === 'Grams') {
+        const perUnit = (it.unitPrice || 0) * 1.3;
+        lineTotal = roundUpToNearest5(perUnit * effectiveQty);
+      } else {
+        lineTotal = effectiveQty * (it.sellingPrice || 0);
+      }
+      // Apply per-product discount
+      const prodDisc = Number(it.productDiscount || 0);
+      if (prodDisc > 0) {
+        lineTotal = lineTotal * (1 - prodDisc / 100);
+      }
+      return acc + lineTotal;
+    }, 0);
+    // Apply loyalty discount (12%), then overall discount
+    const afterLoyalty = isLoyalty ? sum * 0.88 : sum;
+    const d = Number(discountPercent || 0);
+    const net = afterLoyalty * (1 - (isNaN(d) ? 0 : d / 100));
+    return net;
+  }
+
   function isValidBarcode(code: string): boolean {
     const trimmed = (code || '').trim();
     if (!trimmed) return false;
@@ -482,8 +509,11 @@ export default function Sales() {
     }
 
     try {
-      // Check WhatsApp connection status
-      const statusResult = await get('/whatsapp/status');
+      // Check WhatsApp connection status - use IPC if in Electron, otherwise HTTP
+      const statusResult = (window as any).electronAPI?.whatsapp
+        ? await (window as any).electronAPI.whatsapp.getStatus()
+        : await get('/whatsapp/status');
+        
       if (!statusResult.isConnected) {
         return; // WhatsApp not connected, skip
       }
@@ -502,20 +532,42 @@ export default function Sales() {
 
     setSendingWhatsApp(true);
     try {
-      await post('/whatsapp/send-invoice', {
-        contact_no: whatsappInvoiceData.contact_no,
-        invoice_no: whatsappInvoiceData.invoice_no,
-        date: whatsappInvoiceData.date,
-        customer_name: whatsappInvoiceData.customer_name,
-        items: whatsappInvoiceData.items,
-        discount: whatsappInvoiceData.discount,
-        total_amount: whatsappInvoiceData.total_amount,
-        payment_type: whatsappInvoiceData.payment_type
-      });
+      // Use IPC if in Electron, otherwise fallback to HTTP
+      if ((window as any).electronAPI?.whatsapp) {
+        const result = await (window as any).electronAPI.whatsapp.sendInvoice({
+          contact_no: whatsappInvoiceData.contact_no,
+          invoice_no: whatsappInvoiceData.invoice_no,
+          date: whatsappInvoiceData.date,
+          customer_name: whatsappInvoiceData.customer_name,
+          items: whatsappInvoiceData.items,
+          discount: whatsappInvoiceData.discount,
+          total_amount: whatsappInvoiceData.total_amount,
+          payment_type: whatsappInvoiceData.payment_type
+        });
 
-      alert('✅ Invoice sent via WhatsApp successfully!');
-      setShowWhatsAppModal(false);
-      setWhatsappInvoiceData(null);
+        if (result.success) {
+          alert('✅ Invoice sent via WhatsApp successfully!');
+          setShowWhatsAppModal(false);
+          setWhatsappInvoiceData(null);
+        } else {
+          alert('❌ ' + (result.error || result.message || 'Failed to send WhatsApp message'));
+        }
+      } else {
+        await post('/whatsapp/send-invoice', {
+          contact_no: whatsappInvoiceData.contact_no,
+          invoice_no: whatsappInvoiceData.invoice_no,
+          date: whatsappInvoiceData.date,
+          customer_name: whatsappInvoiceData.customer_name,
+          items: whatsappInvoiceData.items,
+          discount: whatsappInvoiceData.discount,
+          total_amount: whatsappInvoiceData.total_amount,
+          payment_type: whatsappInvoiceData.payment_type
+        });
+
+        alert('✅ Invoice sent via WhatsApp successfully!');
+        setShowWhatsAppModal(false);
+        setWhatsappInvoiceData(null);
+      }
     } catch (err: any) {
       const errorMsg = err?.message || 'Failed to send WhatsApp message';
       alert('❌ ' + errorMsg);
@@ -537,7 +589,7 @@ export default function Sales() {
         };
       });
 
-      await post('/print/receipt', {
+      await post('/print/receipt-escpos', {
         invoice_no: sale.sale_invoice_no,
         date: sale.date,
         customer_name: sale.customer_name,
@@ -552,63 +604,53 @@ export default function Sales() {
         navigate('/login', { replace: true });
         return;
       }
-      alert(err?.message || 'Failed to reprint receipt');
+      
+      // Display detailed error information
+      let errorMessage = '❌ Failed to reprint receipt\n\n';
+      
+      if (err?.data && typeof err.data === 'object') {
+        const errorData = err.data;
+        errorMessage += `Error: ${errorData.message || err.message}\n`;
+        
+        if (errorData.errorCategory) {
+          errorMessage += `\nCategory: ${errorData.errorCategory}\n`;
+        }
+        
+        if (errorData.details) {
+          errorMessage += `\nDetails:\n`;
+          errorMessage += `  • Printer: ${errorData.details.printerName}\n`;
+          if (errorData.details.errorCode) {
+            errorMessage += `  • Error Code: ${errorData.details.errorCode}\n`;
+          }
+        }
+        
+        if (errorData.troubleshooting && errorData.troubleshooting.length > 0) {
+          errorMessage += `\nTroubleshooting Steps:\n`;
+          errorData.troubleshooting.forEach((step: string) => {
+            errorMessage += `${step}\n`;
+          });
+        }
+        
+        if (errorData.availablePrinters && errorData.availablePrinters.length > 0) {
+          errorMessage += `\nAvailable Printers:\n`;
+          errorData.availablePrinters.forEach((printer: string) => {
+            errorMessage += `  • ${printer}\n`;
+          });
+        }
+      } else {
+        errorMessage += err?.message || 'Unknown error occurred';
+      }
+      
+      alert(errorMessage);
     }
   }
 
   return (
-    <div>
-      <div style={{
-        display: 'flex',
-        gap: 12,
-        alignItems: 'center',
-        padding: 12,
-        position: 'sticky',
-        top: 0,
-        background: gold,
-        color: '#fff',
-        borderBottom: `1px solid ${roseGoldLight}`,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-      }}>
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Sales</div>
-        
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={goHome}
-          style={{
-            background: gold,
-            color: '#fff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}
-        >
-          Home
-        </button>
-        <button
-          onClick={logout}
-          style={{
-            background: gold,
-            color: '#fff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}
-        >
-          Logout
-        </button>
-      </div>
-      <div style={{ padding: 24 }}>
+    <Layout>
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700 }}>Sales</h2>
+        </div>
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={() => setShowForm(v => { const nv = !v; if (!v) { const todayStr = new Date().toLocaleDateString('en-CA'); if (!invoiceNo) { const p = (latestInvoiceNo || '').toString().trim(); const m = /(.*?)(\d+)\s*$/.exec(p); const next = m ? `${m[1]}${String((Number(m[2])||0)+1).padStart(m[2].length, '0')}` : 'INV-1'; setInvoiceNo(next); } if (!date) setDate(todayStr); } return nv; })}
@@ -1047,19 +1089,7 @@ export default function Sales() {
                         value={amountGiven}
                         onChange={e => {
                           setAmountGiven(e.target.value);
-                          const sum = items.reduce((acc, it) => {
-                            const qtyNum = Number(it.qty || 0);
-                            const effectiveQty = (it.sku || '') === 'Grams' ? (it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum) : qtyNum;
-                            if ((it.sku || '') === 'Grams') {
-                              const perUnit = (it.unitPrice || 0) * 1.3;
-                              const lineRounded = roundUpToNearest5(perUnit * effectiveQty);
-                              return acc + lineRounded;
-                            } else {
-                              return acc + effectiveQty * (it.sellingPrice || 0);
-                            }
-                          }, 0);
-                          const d = Number(discount || 0);
-                          const total = sum * (1 - (isNaN(d) ? 0 : d / 100));
+                          const total = calculateTotalAmount(items, discount, isLoyaltyCustomer);
                           const given = Number(e.target.value || 0);
                           setChangeAmount(Math.max(0, given - total));
                         }}
@@ -1085,19 +1115,7 @@ export default function Sales() {
                         onClick={async () => {
                           if (isSubmitting) return;
                           
-                          const sum = items.reduce((acc, it) => {
-                            const qtyNum = Number(it.qty || 0);
-                            const effectiveQty = (it.sku || '') === 'Grams' ? (it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum) : qtyNum;
-                            if ((it.sku || '') === 'Grams') {
-                              const perUnit = (it.unitPrice || 0) * 1.3;
-                              const lineRounded = roundUpToNearest5(perUnit * effectiveQty);
-                              return acc + lineRounded;
-                            } else {
-                              return acc + effectiveQty * (it.sellingPrice || 0);
-                            }
-                          }, 0);
-                          const d = Number(discount || 0);
-                          const total = sum * (1 - (isNaN(d) ? 0 : d / 100));
+                          const total = calculateTotalAmount(items, discount, isLoyaltyCustomer);
                           const given = Number(amountGiven || 0);
                           
                           if (given < total) {
@@ -1140,16 +1158,18 @@ export default function Sales() {
                               return {
                                 product_name: productName,
                                 qty: effectiveQty,
-                                selling_price: sellingPrice
+                                selling_price: sellingPrice,
+                                item_discount: it.productDiscount ? Number(it.productDiscount) : undefined
                               };
                             });
 
-                            await post('/print/receipt', {
+                            await post('/print/receipt-escpos', {
                               invoice_no: invoiceNo,
                               date: date,
                               customer_name: customerName,
                               items: receiptItems,
                               discount: discount ? Number(discount) : 0,
+                              loyalty_discount: isLoyaltyCustomer ? 12 : undefined,
                               total_amount: total,
                               payment_type: 'Cash Payment',
                               amount_given: given,
@@ -1184,7 +1204,7 @@ export default function Sales() {
                             setAmountGiven('');
                             setChangeAmount(0);
                             try { localStorage.removeItem('sales_form_cache'); } catch {}
-                            setTimeout(() => { try { window.location.reload(); } catch {} }, 100);
+                            // Removed window.location.reload() - causes white screen in packaged Electron app
                           } catch (err: any) {
                             setIsSubmitting(false);
                             if (err?.status === 401) { 
@@ -1192,7 +1212,44 @@ export default function Sales() {
                               navigate('/login', { replace: true }); 
                               return; 
                             }
-                            alert(err?.message || 'Failed to complete sale');
+                            
+                            // Display detailed error information
+                            let errorMessage = '❌ Failed to complete sale\n\n';
+                            
+                            if (err?.data && typeof err.data === 'object') {
+                              const errorData = err.data;
+                              errorMessage += `Error: ${errorData.message || err.message}\n`;
+                              
+                              if (errorData.errorCategory) {
+                                errorMessage += `\nCategory: ${errorData.errorCategory}\n`;
+                              }
+                              
+                              if (errorData.details) {
+                                errorMessage += `\nDetails:\n`;
+                                errorMessage += `  • Printer: ${errorData.details.printerName}\n`;
+                                if (errorData.details.errorCode) {
+                                  errorMessage += `  • Error Code: ${errorData.details.errorCode}\n`;
+                                }
+                              }
+                              
+                              if (errorData.troubleshooting && errorData.troubleshooting.length > 0) {
+                                errorMessage += `\nTroubleshooting Steps:\n`;
+                                errorData.troubleshooting.forEach((step: string) => {
+                                  errorMessage += `${step}\n`;
+                                });
+                              }
+                              
+                              if (errorData.availablePrinters && errorData.availablePrinters.length > 0) {
+                                errorMessage += `\nAvailable Printers:\n`;
+                                errorData.availablePrinters.forEach((printer: string) => {
+                                  errorMessage += `  • ${printer}\n`;
+                                });
+                              }
+                            } else {
+                              errorMessage += err?.message || 'Unknown error occurred';
+                            }
+                            
+                            alert(errorMessage);
                           }
                         }}
                         disabled={!amountGiven || Number(amountGiven) <= 0 || isSubmitting}
@@ -1225,19 +1282,7 @@ export default function Sales() {
                           try {
                             await refreshInventoryLatest();
                             const validItems = items.filter(it => (it.inventory_id || it.barcode) && it.qty && Number(it.qty) > 0);
-                            const sum = items.reduce((acc, it) => {
-                              const qtyNum = Number(it.qty || 0);
-                              const effectiveQty = (it.sku || '') === 'Grams' ? (it.qtyUnit === 'KG' ? qtyNum * 1000 : qtyNum) : qtyNum;
-                              if ((it.sku || '') === 'Grams') {
-                                const perUnit = (it.unitPrice || 0) * 1.3;
-                                const lineRounded = roundUpToNearest5(perUnit * effectiveQty);
-                                return acc + lineRounded;
-                              } else {
-                                return acc + effectiveQty * (it.sellingPrice || 0);
-                              }
-                            }, 0);
-                            const d = Number(discount || 0);
-                            const total = sum * (1 - (isNaN(d) ? 0 : d / 100));
+                            const total = calculateTotalAmount(items, discount, isLoyaltyCustomer);
                             
                             // Save sale with payment_type
                             const payload = {
@@ -1269,16 +1314,18 @@ export default function Sales() {
                               return {
                                 product_name: productName,
                                 qty: effectiveQty,
-                                selling_price: sellingPrice
+                                selling_price: sellingPrice,
+                                item_discount: it.productDiscount ? Number(it.productDiscount) : undefined
                               };
                             });
 
-                            await post('/print/receipt', {
+                            await post('/print/receipt-escpos', {
                               invoice_no: invoiceNo,
                               date: date,
                               customer_name: customerName,
                               items: receiptItems,
                               discount: discount ? Number(discount) : 0,
+                              loyalty_discount: isLoyaltyCustomer ? 12 : undefined,
                               total_amount: total,
                               payment_type: 'Card Payment'
                             });
@@ -1309,7 +1356,7 @@ export default function Sales() {
                             setShowPaymentModal(false);
                             setPaymentType(null);
                             try { localStorage.removeItem('sales_form_cache'); } catch {}
-                            setTimeout(() => { try { window.location.reload(); } catch {} }, 100);
+                            // Removed window.location.reload() - causes white screen in packaged Electron app
                           } catch (err: any) {
                             setIsSubmitting(false);
                             if (err?.status === 401) { 
@@ -1439,6 +1486,6 @@ export default function Sales() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

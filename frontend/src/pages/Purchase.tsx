@@ -5,7 +5,7 @@ import { get, post } from '../services/api';
 
 export default function Purchase() {
   const navigate = useNavigate();
-  const gold = '#001f3f';
+  const gold = '#31a354';
   const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);
@@ -180,7 +180,7 @@ export default function Purchase() {
   }
 
   return (
-    <Layout backgroundColor="#808080">
+    <Layout backgroundColor="#d0d0d0ff">
       <style>{`@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }`}</style>
       {confirmVisible && (
         <div style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 9999, pointerEvents: 'none' }}>
@@ -213,7 +213,7 @@ export default function Purchase() {
               padding: 16,
               width: '100%',
               maxWidth: 520,
-              background: '#808080',
+              background: '#d0d0d0ff',
               boxShadow: '0 6px 18px rgba(0,0,0,0.08)',
               boxSizing: 'border-box',
               marginBottom: 16,

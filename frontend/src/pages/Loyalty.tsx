@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { get } from '../services/api'
+import Layout from '../components/Layout'
 
-const roseGold = '#001f3f'
+const roseGold = '#31a354'
 const roseGoldLight = '#e0e0e0'
-const gold = '#001f3f'
+const gold = '#31a354'
 const goldHover = '#003366'
 
 export default function Loyalty() {
@@ -14,8 +15,6 @@ export default function Loyalty() {
   const [qMobile, setQMobile] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [message, setMessage] = useState('')
-  function logout() { localStorage.removeItem('token'); navigate('/login', { replace: true }) }
-  function goHome() { navigate('/dashboard') }
   useEffect(() => {
     (async () => {
       try {
@@ -27,34 +26,11 @@ export default function Loyalty() {
     })()
   }, [navigate])
   return (
-    <div style={{ minHeight: '100vh', background: '#333' }}>
-      <div style={{
-        display: 'flex', gap: 12, alignItems: 'center', padding: 12,
-        position: 'sticky', top: 0,
-        background: '#001f3f',
-        color: '#fff', borderBottom: `1px solid ${roseGoldLight}`,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-      }}>
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Loyalty</div>
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={goHome}
-          style={{ background: gold, color: '#000', border: 'none', padding: '10px 20px', borderRadius: 8, fontWeight: 800, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Home
-        </button>
-        <button
-          onClick={logout}
-          style={{ background: gold, color: '#000', border: 'none', padding: '10px 20px', borderRadius: 8, fontWeight: 800, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Logout
-        </button>
-      </div>
-      <div style={{ padding: 24 }}>
+    <Layout>
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700 }}>Loyalty</h2>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
           <div>
             <div style={{ fontWeight: 700, color: roseGold, marginBottom: 8 }}>Loyalty Customers</div>
@@ -120,6 +96,6 @@ export default function Loyalty() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }

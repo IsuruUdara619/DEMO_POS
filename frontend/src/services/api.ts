@@ -1,7 +1,10 @@
 import logger from './logger';
 
-// Use relative path to leverage Vite proxy in development and relative path in production
-const base = '/api';
+// Use relative path to leverage Vite proxy in development and absolute URL in Electron
+// In Electron, the frontend is loaded via file:// protocol, so we need absolute URL
+const base = window.location.protocol === 'file:' 
+  ? 'http://localhost:5000/api'  // Electron packaged app
+  : '/api';  // Development with Vite proxy
 
 async function handleResponse(res: Response, method: string, path: string) {
   if (!res.ok) {

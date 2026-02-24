@@ -4,12 +4,13 @@ import { get } from '../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Layout from '../components/Layout';
 
-const roseGold = '#001f3f';
+const roseGold = '#31a354';
 const roseGoldLight = '#e0e0e0';
-const gold = '#001f3f';
+const gold = '#31a354';
 const goldHover = '#003366';
-const SHOP_NAME = 'Heaven_Bakers';
+const SHOP_NAME = 'Demo POS System';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -20,9 +21,6 @@ export default function Reports() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [report, setReport] = useState<'Summary'|'Sales'|'Inventory'|'Purchases'>('Summary');
-
-  function logout() { localStorage.removeItem('token'); navigate('/login', { replace: true }); }
-  function goHome() { navigate('/dashboard'); }
 
   useEffect(() => {
     (async () => {
@@ -186,7 +184,7 @@ export default function Reports() {
       const rows = currentRows();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), report);
     }
-    const name = `Heaven_${report}_${from || 'all'}_${to || 'all'}.xlsx`;
+    const name = `${SHOP_NAME.replace(/\s+/g, '_')}_${report}_${from || 'all'}_${to || 'all'}.xlsx`;
     XLSX.writeFile(wb, name);
   }
 
@@ -306,7 +304,7 @@ export default function Reports() {
         }
       });
     }
-    const name = `Heaven_${report}_${from || 'all'}_${to || 'all'}.pdf`;
+    const name = `${SHOP_NAME.replace(/\s+/g, '_')}_${report}_${from || 'all'}_${to || 'all'}.pdf`;
     const totalPages = (doc as any).getNumberOfPages();
     if (report === 'Sales') {
       const w = (doc as any).internal.pageSize.getWidth();
@@ -422,7 +420,7 @@ export default function Reports() {
       }
       y += 2;
     }
-    const name = `Heaven_Sales_${from || 'all'}_${to || 'all'}.pdf`;
+    const name = `${SHOP_NAME.replace(/\s+/g, '_')}_Sales_${from || 'all'}_${to || 'all'}.pdf`;
     const totalPages = (doc as any).getNumberOfPages();
     const w = (doc as any).internal.pageSize.getWidth();
     const h = (doc as any).internal.pageSize.getHeight();
@@ -443,61 +441,11 @@ export default function Reports() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#333' }}>
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          padding: 12,
-          position: 'sticky',
-          top: 0,
-          background: '#001f3f',
-          color: '#fff',
-          borderBottom: `1px solid ${roseGoldLight}`,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 24 }}>Reports</div>
-        
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={goHome}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#000' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#000' }}
-        >
-          Home
-        </button>
-        <button
-          onClick={logout}
-          style={{
-            background: gold,
-            color: '#000',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }}
-          onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}
-        >
-          Logout
-        </button>
-      </div>
-
-      <div style={{ padding: 24 }}>
+    <Layout>
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700 }}>Reports</h2>
+        </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             {(['Summary','Sales','Inventory','Purchases'] as const).map(r => (
@@ -710,6 +658,6 @@ export default function Reports() {
           )}
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

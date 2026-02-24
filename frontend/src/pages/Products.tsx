@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { post, get } from '../services/api';
+import { post, get, put } from '../services/api';
 import JsBarcode from 'jsbarcode';
 
 export default function Products() {
@@ -15,6 +15,8 @@ export default function Products() {
   const navigate = useNavigate();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [items, setItems] = useState<Array<{ product_id: number; product_name: string; sku: string | null; category: string | null; low_stock_threshold: number | null }>>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingMode, setEditingMode] = useState(false);
   const [barcodeProductId, setBarcodeProductId] = useState<number | ''>('');
   const [barcodeBrand, setBarcodeBrand] = useState('');
   const [barcodeInvoice, setBarcodeInvoice] = useState('');
@@ -72,13 +74,64 @@ export default function Products() {
     'Tools'
   ];
 
-  const roseGold = '#001f3f';
+  const roseGold = '#31a354';
   const roseGoldLight = '#e0e0e0';
-  const gold = '#001f3f';
+  const gold = '#31a354';
   const goldHover = '#003366';
 
   function toggleForm() {
     setShowForm(v => !v);
+    if (showForm) {
+      // Reset editing state when closing form
+      setEditingMode(false);
+      setEditingId(null);
+      setProductName('');
+      setSku('');
+      setCategory('');
+      setLowStockThreshold('');
+      setError('');
+    }
+  }
+
+  function startEdit(product: { product_id: number; product_name: string; sku: string | null; category: string | null; low_stock_threshold: number | null }) {
+    setEditingId(product.product_id);
+    setEditingMode(true);
+    setProductName(product.product_name || '');
+    setSku(product.sku || '');
+    setCategory(product.category || '');
+    setLowStockThreshold(product.low_stock_threshold !== null ? String(product.low_stock_threshold) : '');
+    setError('');
+    setShowForm(true);
+  }
+
+  async function deleteProduct(productId: number, productName: string) {
+    if (!window.confirm(`Are you sure you want to delete this product?\n\nProduct: ${productName}\nID: ${productId}\n\nWarning: This action cannot be undone!`)) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete product');
+      }
+      
+      alert('Product deleted successfully!');
+      fetchProducts();
+    } catch (err: any) {
+      if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
+        navigate('/login', { replace: true });
+      } else {
+        alert(err?.message || 'Failed to delete product');
+      }
+    }
   }
 
   // Fetch next product ID
@@ -176,7 +229,21 @@ export default function Products() {
     e.preventDefault();
     setError('');
     try {
-      const data = await post('/products', { product_name: productName, sku, category, low_stock_threshold: Number(lowStockThreshold) || 0 });
+      if (editingMode && editingId !== null) {
+        await put(`/products/${editingId}`, { 
+          product_name: productName, 
+          sku, 
+          category, 
+          low_stock_threshold: Number(lowStockThreshold) || 0 
+        });
+      } else {
+        await post('/products', { 
+          product_name: productName, 
+          sku, 
+          category, 
+          low_stock_threshold: Number(lowStockThreshold) || 0 
+        });
+      }
       setConfirmVisible(true);
       setTimeout(() => setConfirmVisible(false), 700);
       setProductName('');
@@ -184,6 +251,8 @@ export default function Products() {
       setCategory('');
       setLowStockThreshold('');
       setShowForm(false);
+      setEditingMode(false);
+      setEditingId(null);
       fetchProducts();
     } catch (err: any) {
       if (err?.status === 401 || /Unauthorized/i.test(err?.message || '')) {
@@ -289,7 +358,7 @@ export default function Products() {
   }
 
   return (
-    <Layout backgroundColor="#808080">
+    <Layout backgroundColor="#d0d0d0ff">
     <div style={{ padding: 24 }}>
       <style>
         {`
@@ -317,7 +386,7 @@ export default function Products() {
           padding: 16,
           width: '100%',
           maxWidth: 520,
-          background: '#808080',
+          background: '#444',
           boxShadow: '0 6px 18px rgba(0,0,0,0.08)',
           boxSizing: 'border-box',
           marginBottom: 16,
@@ -363,6 +432,7 @@ export default function Products() {
             >
               <option value="">Select...</option>
               <option value="Grams">Grams</option>
+              <option value="KG">KG</option>
               <option value="PCS">PCS</option>
               <option value="FT">FT</option>
               <option value="INCH">INCH</option>
@@ -394,7 +464,7 @@ export default function Products() {
               onMouseEnter={e => { e.currentTarget.style.background = goldHover; e.currentTarget.style.color = '#fff' }}
               onMouseLeave={e => { e.currentTarget.style.background = gold; e.currentTarget.style.color = '#fff' }}
             >
-              Save Product
+              {editingMode ? 'Update Product' : 'Save Product'}
             </button>
         </form>
       )}
@@ -453,6 +523,7 @@ export default function Products() {
               >
                 <option value="">All SKUs</option>
                 <option value="Grams">Grams</option>
+                <option value="KG">KG</option>
                 <option value="PCS">PCS</option>
                 <option value="FT">FT</option>
                 <option value="INCH">INCH</option>
@@ -478,10 +549,50 @@ export default function Products() {
                   <div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
                       {pageItems.map(it => (
-                        <div key={it.product_id} style={{ borderRadius: 8, padding: 12, background: '#808080', color: '#fff' }}>
-                          <div style={{ fontWeight: 700, color: '#fff' }}>{it.product_name}</div>
+                        <div key={it.product_id} style={{ borderRadius: 8, padding: 12, background: '#444', color: '#fff', position: 'relative' }}>
+                          <div style={{ fontWeight: 700, color: '#fff', marginBottom: 4 }}>{it.product_name}</div>
                           <div style={{ fontSize: 12, color: '#ccc' }}>SKU: {it.sku || '-'}</div>
-                          <div style={{ fontSize: 12, color: '#ccc' }}>Category: {it.category || '-'}</div>
+                          <div style={{ fontSize: 12, color: '#ccc', marginBottom: 8 }}>Category: {it.category || '-'}</div>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                            <button
+                              onClick={() => startEdit(it)}
+                              style={{
+                                background: gold,
+                                color: '#fff',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                flex: 1
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = goldHover; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = gold; }}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => deleteProduct(it.product_id, it.product_name)}
+                              style={{
+                                background: '#dc3545',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                flex: 1
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = '#c82333'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#dc3545'; }}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -513,7 +624,7 @@ export default function Products() {
           </div>
         </div>
         <div>
-          <div style={{ borderRadius: 12, padding: 16, background: '#808080', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', color: '#fff' }}>
+          <div style={{ borderRadius: 12, padding: 16, background: '#444', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', color: '#fff' }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               <button
                 onClick={() => setBarcodeMode('premade')}
@@ -1042,7 +1153,7 @@ export default function Products() {
                 <div style={{ fontWeight: 600, marginBottom: 8, color: '#fff' }}>
                   Barcode Preview
                 </div>
-                <div style={{ padding: 16, background: '#808080', borderRadius: 8, border: '2px solid #555', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ padding: 16, background: '#444', borderRadius: 8, border: '2px solid #555', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
                     {searchResults.find(r => r.barcode === selectedViewBarcode)?.product_name || 'Product'}
                   </div>

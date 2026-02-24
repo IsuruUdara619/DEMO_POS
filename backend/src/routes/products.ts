@@ -123,4 +123,35 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return res.status(500).send('Server misconfigured');
+  if (!token) return res.status(401).send('Unauthorized');
+  try {
+    jwt.verify(token, secret);
+  } catch {
+    return res.status(401).send('Unauthorized');
+  }
+
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).send('Invalid id');
+  
+  try {
+    const r = await pool.query(
+      'DELETE FROM products WHERE product_id = $1 RETURNING product_id',
+      [id]
+    );
+    
+    if (r.rowCount === 0) {
+      return res.status(404).send('Product not found');
+    }
+    
+    res.json({ message: 'Product deleted successfully', product_id: r.rows[0].product_id });
+  } catch (e: any) {
+    res.status(500).send(e?.message || 'Server error');
+  }
+});
+
 export default router;

@@ -5,9 +5,9 @@ import Layout from '../components/Layout';
 
 export default function Vendors() {
   const navigate = useNavigate();
-  const roseGold = '#001f3f';
+  const roseGold = '#31a354';
   const roseGoldLight = '#e0e0e0';
-  const gold = '#001f3f';
+  const gold = '#31a354';
   const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);
@@ -68,7 +68,7 @@ export default function Vendors() {
   }
 
   return (
-    <Layout backgroundColor="#808080">
+    <Layout backgroundColor="#d0d0d0ff">
       <div style={{ padding: 24 }}>
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ color: '#fff', fontSize: 36, fontWeight: 900, margin: 0 }}>Vendors</h2>
