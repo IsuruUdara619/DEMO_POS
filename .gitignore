@@ -62,3 +62,4 @@ coverage/
 .pnpm-debug.log*
 .yarn-integrity
 .yarn/
+dist/
