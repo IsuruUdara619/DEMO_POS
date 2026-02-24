@@ -69,18 +69,14 @@ class ErrorReporter {
     // Log to console
     console.error('[ErrorReporter]', errorReport);
 
-    // Send to Electron if available
-    if (window.electronAPI?.logError) {
-      window.electronAPI.logError({
-        level: 'error',
-        message: error.message,
-        context: {
-          stack: error.stack,
-          url: error.url,
-          ...error.context
-        }
-      });
-    }
+    // Send to backend if needed (optional)
+    /*
+    fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(errorReport)
+    }).catch(console.error);
+    */
   }
 
   reportWarning(message: string, context?: any) {

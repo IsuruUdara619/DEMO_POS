@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { get, post, put, del } from '../services/api';
+import { whatsapp } from '../services/whatsapp';
 import ErrorLogViewer from '../components/ErrorLogViewer';
 
 export default function Settings() {
@@ -61,23 +62,10 @@ export default function Settings() {
     loadPrinterSettings();
     loadAvailablePrinters();
     
-    // Setup WhatsApp status change listener if running in Electron
-    if ((window as any).electronAPI?.whatsapp) {
-      (window as any).electronAPI.whatsapp.onStatusChange((status: any) => {
-        setWhatsappStatus(status);
-      });
-    } else {
-      // Fallback to polling if not in Electron
-      const interval = setInterval(loadWhatsAppStatus, 10000);
-      return () => clearInterval(interval);
-    }
-    
-    return () => {
-      // Cleanup listener when component unmounts
-      if ((window as any).electronAPI?.whatsapp?.removeStatusChangeListener) {
-        (window as any).electronAPI.whatsapp.removeStatusChangeListener();
-      }
-    };
+    // Poll for WhatsApp status
+    loadWhatsAppStatus();
+    const interval = setInterval(loadWhatsAppStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   async function loadUsers() {
@@ -125,14 +113,8 @@ export default function Settings() {
 
   async function loadWhatsAppStatus() {
     try {
-      // Use IPC if in Electron, otherwise fallback to HTTP
-      if ((window as any).electronAPI?.whatsapp) {
-        const r = await (window as any).electronAPI.whatsapp.getStatus();
-        setWhatsappStatus(r);
-      } else {
-        const r = await get('/whatsapp/status');
-        setWhatsappStatus(r);
-      }
+      const status = await whatsapp.getStatus();
+      setWhatsappStatus(status);
     } catch (e: any) {
       // Silently fail, status will be null
       console.error('Failed to load WhatsApp status:', e);
@@ -157,10 +139,7 @@ export default function Settings() {
       try {
         console.log('Fetching QR code...');
         
-        // Use IPC if in Electron, otherwise fallback to HTTP
-        const r = (window as any).electronAPI?.whatsapp 
-          ? await (window as any).electronAPI.whatsapp.getQRCode()
-          : await get('/whatsapp/qr');
+        const r = await whatsapp.getQRCode();
           
         console.log('QR fetch response:', r.qrCode ? 'QR Received' : 'No QR');
         
@@ -168,40 +147,53 @@ export default function Settings() {
           setQrCode(r.qrCode);
           setQrLoading(false);
           
-          // In Electron, status updates come via events, no need to poll
-          // In browser, poll for status
-          if (!(window as any).electronAPI?.whatsapp) {
-            const pollInterval = setInterval(async () => {
-              try {
-                const status = await get('/whatsapp/status');
-                setWhatsappStatus(status);
-                
-                if (status.isConnected) {
-                  clearInterval(pollInterval);
-                  setShowQRModal(false);
-                  setQrCode(null);
-                  alert('✅ WhatsApp connected successfully!');
-                } else if (status.isAuthenticated || status.isLoading) {
-                  setQrCode(null);
+          // Poll for status to detect connection
+          const pollInterval = setInterval(async () => {
+            try {
+              const status = await whatsapp.getStatus();
+              setWhatsappStatus(status);
+              
+              if (status.isConnected) {
+                clearInterval(pollInterval);
+                setShowQRModal(false);
+                setQrCode(null);
+                alert('✅ WhatsApp connected successfully!');
+              } else if (status.isAuthenticated || status.isLoading) {
+                setQrCode(null);
+                setQrLoading(false);
+              } else {
+                // Refresh QR if needed
+                const r = await whatsapp.getQRCode();
+                if (r.qrCode) {
+                  setQrCode(r.qrCode);
                   setQrLoading(false);
-                } else {
-                  const r = await get('/whatsapp/qr');
-                  if (r.qrCode) {
-                    setQrCode(r.qrCode);
-                    setQrLoading(false);
-                  }
                 }
-              } catch (e) {
-                console.error('Error polling status:', e);
               }
-            }, 2000);
+            } catch (e) {
+              console.error('Error polling status:', e);
+            }
+          }, 2000);
 
-            setTimeout(() => clearInterval(pollInterval), 120000);
-          }
-          return;
+          // Stop polling after 2 minutes
+          setTimeout(() => clearInterval(pollInterval), 120000);
+        } else if (r.isInitializing) {
+           // Still initializing, wait and retry
+           attempts++;
+           if (attempts < maxAttempts) {
+             setTimeout(checkQR, 2000);
+           } else {
+             setQrLoading(false);
+           }
+           return;
+        } else if (r.message && r.message.includes('Already connected')) {
+            setShowQRModal(false);
+            setQrCode(null);
+            loadWhatsAppStatus();
+            alert('✅ WhatsApp is already connected!');
+            return;
         }
         
-        // If not ready, retry
+        // If not ready and not handled above, retry
         attempts++;
         if (attempts < maxAttempts) {
           setTimeout(checkQR, 2000);
@@ -209,8 +201,8 @@ export default function Settings() {
           setQrLoading(false);
         }
       } catch (e: any) {
-        // Check if already connected
-        if (e.status === 400 || e.error === 'Already connected' || (e.response && e.response.status === 400)) {
+        // Check if already connected (status 400 or error message)
+        if (e.status === 400 || (e.response && e.response.status === 400)) {
           setShowQRModal(false);
           setQrCode(null);
           loadWhatsAppStatus();
@@ -233,12 +225,7 @@ export default function Settings() {
 
   async function handleRefreshQR() {
     try {
-      // Use IPC if in Electron, otherwise fallback to HTTP
-      if ((window as any).electronAPI?.whatsapp) {
-        await (window as any).electronAPI.whatsapp.reconnect();
-      } else {
-        await post('/whatsapp/reconnect', {});
-      }
+      await whatsapp.reconnect();
       // Wait a moment for initialization
       await new Promise(resolve => setTimeout(resolve, 2000));
       // Then load the new QR code
@@ -252,20 +239,9 @@ export default function Settings() {
     if (!confirm('Are you sure you want to disconnect WhatsApp?')) return;
     
     try {
-      // Use IPC if in Electron, otherwise fallback to HTTP
-      if ((window as any).electronAPI?.whatsapp) {
-        const result = await (window as any).electronAPI.whatsapp.disconnect();
-        if (result.success) {
-          setWhatsappStatus(null);
-          alert('WhatsApp disconnected successfully');
-        } else {
-          alert(result.error || 'Failed to disconnect');
-        }
-      } else {
-        await post('/whatsapp/disconnect', {});
-        setWhatsappStatus(null);
-        alert('WhatsApp disconnected successfully');
-      }
+      await whatsapp.disconnect();
+      setWhatsappStatus(null);
+      alert('WhatsApp disconnected successfully');
     } catch (e: any) {
       alert(e?.message || 'Failed to disconnect');
     }
@@ -273,10 +249,7 @@ export default function Settings() {
 
   async function handleTestConnection() {
     try {
-      // Use IPC if in Electron, otherwise fallback to HTTP
-      const status = (window as any).electronAPI?.whatsapp
-        ? await (window as any).electronAPI.whatsapp.getStatus()
-        : await get('/whatsapp/status');
+      const status = await whatsapp.getStatus();
         
       if (status.isConnected) {
         alert('✅ WhatsApp is connected and working properly!');

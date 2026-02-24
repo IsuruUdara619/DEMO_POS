@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../services/api';
+import { whatsapp } from '../services/whatsapp';
 import Layout from '../components/Layout';
 
 const roseGold = '#31a354';
@@ -509,10 +510,8 @@ export default function Sales() {
     }
 
     try {
-      // Check WhatsApp connection status - use IPC if in Electron, otherwise HTTP
-      const statusResult = (window as any).electronAPI?.whatsapp
-        ? await (window as any).electronAPI.whatsapp.getStatus()
-        : await get('/whatsapp/status');
+      // Check WhatsApp connection status
+      const statusResult = await whatsapp.getStatus();
         
       if (!statusResult.isConnected) {
         return; // WhatsApp not connected, skip
@@ -532,42 +531,20 @@ export default function Sales() {
 
     setSendingWhatsApp(true);
     try {
-      // Use IPC if in Electron, otherwise fallback to HTTP
-      if ((window as any).electronAPI?.whatsapp) {
-        const result = await (window as any).electronAPI.whatsapp.sendInvoice({
-          contact_no: whatsappInvoiceData.contact_no,
-          invoice_no: whatsappInvoiceData.invoice_no,
-          date: whatsappInvoiceData.date,
-          customer_name: whatsappInvoiceData.customer_name,
-          items: whatsappInvoiceData.items,
-          discount: whatsappInvoiceData.discount,
-          total_amount: whatsappInvoiceData.total_amount,
-          payment_type: whatsappInvoiceData.payment_type
-        });
+      await whatsapp.sendInvoice({
+        contact_no: whatsappInvoiceData.contact_no,
+        invoice_no: whatsappInvoiceData.invoice_no,
+        date: whatsappInvoiceData.date,
+        customer_name: whatsappInvoiceData.customer_name,
+        items: whatsappInvoiceData.items,
+        discount: whatsappInvoiceData.discount,
+        total_amount: whatsappInvoiceData.total_amount,
+        payment_type: whatsappInvoiceData.payment_type
+      });
 
-        if (result.success) {
-          alert('✅ Invoice sent via WhatsApp successfully!');
-          setShowWhatsAppModal(false);
-          setWhatsappInvoiceData(null);
-        } else {
-          alert('❌ ' + (result.error || result.message || 'Failed to send WhatsApp message'));
-        }
-      } else {
-        await post('/whatsapp/send-invoice', {
-          contact_no: whatsappInvoiceData.contact_no,
-          invoice_no: whatsappInvoiceData.invoice_no,
-          date: whatsappInvoiceData.date,
-          customer_name: whatsappInvoiceData.customer_name,
-          items: whatsappInvoiceData.items,
-          discount: whatsappInvoiceData.discount,
-          total_amount: whatsappInvoiceData.total_amount,
-          payment_type: whatsappInvoiceData.payment_type
-        });
-
-        alert('✅ Invoice sent via WhatsApp successfully!');
-        setShowWhatsAppModal(false);
-        setWhatsappInvoiceData(null);
-      }
+      alert('✅ Invoice sent via WhatsApp successfully!');
+      setShowWhatsAppModal(false);
+      setWhatsappInvoiceData(null);
     } catch (err: any) {
       const errorMsg = err?.message || 'Failed to send WhatsApp message';
       alert('❌ ' + errorMsg);

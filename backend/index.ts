@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import { pool, ensurePool } from './src/db';
 import { Pool } from 'pg';
@@ -18,6 +19,7 @@ import printRouter from './src/routes/print';
 import logsRouter from './src/routes/logs';
 import printerSettingsRouter from './src/routes/printerSettings';
 import diagnosticsRouter from './src/routes/diagnostics';
+import whatsappRouter from './src/routes/whatsapp';
 import errorLogger from './src/middleware/errorLogger';
 import bcrypt from 'bcryptjs';
 
@@ -43,6 +45,20 @@ app.use('/api/print', printRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/printer-settings', printerSettingsRouter);
 app.use('/api/diagnostics', diagnosticsRouter);
+app.use('/api/whatsapp', whatsappRouter);
+
+// Serve static files from frontend build
+const frontendPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendPath));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    next();
+    return;
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // Add error handling middleware (must be last)
 app.use(errorLogger.errorHandler());
