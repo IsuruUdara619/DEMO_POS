@@ -44,6 +44,7 @@ pglite-data/
 
 # WhatsApp session data
 backend/data/.wwebjs_auth/
+whatsapp-session/
 
 # Frontend build
 frontend-build/

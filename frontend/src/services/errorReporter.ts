@@ -96,14 +96,6 @@ class ErrorReporter {
     }
 
     console.warn('[ErrorReporter]', warning);
-
-    if (window.electronAPI?.logError) {
-      window.electronAPI.logError({
-        level: 'warn',
-        message,
-        context
-      });
-    }
   }
 
   reportInfo(message: string, context?: any) {
@@ -123,14 +115,6 @@ class ErrorReporter {
     }
 
     console.log('[ErrorReporter]', info);
-
-    if (window.electronAPI?.logError) {
-      window.electronAPI.logError({
-        level: 'info',
-        message,
-        context
-      });
-    }
   }
 
   getRecentErrors(count: number = 20): ErrorLog[] {
@@ -154,13 +138,3 @@ class ErrorReporter {
 export const errorReporter = new ErrorReporter();
 export default errorReporter;
 
-// Add type declarations for window.electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      logError?: (log: { level: string; message: string; context?: any }) => void;
-      openLogsFolder?: () => void;
-      getDiagnostics?: () => Promise<any>;
-    };
-  }
-}
