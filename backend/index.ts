@@ -3,7 +3,6 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import { pool, ensurePool } from './src/db';
-import { Pool } from 'pg';
 import authRouter from './src/routes/auth';
 import usersRouter from './src/routes/users';
 import productsRouter from './src/routes/products';
@@ -80,21 +79,6 @@ async function init() {
   } catch (error) {
     console.error('❌ Failed to initialize database pool:', error);
     throw new Error(`Database pool initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-  const targetUrl = process.env.DATABASE_URL;
-  if (!targetUrl) {
-    throw new Error('DATABASE_URL environment variable is not set. Please configure database connection.');
-  }
-
-  let urlObj, dbName, adminUrl;
-  try {
-    urlObj = new URL(targetUrl);
-    dbName = urlObj.pathname.slice(1);
-    adminUrl = new URL(targetUrl);
-    adminUrl.pathname = '/postgres';
-    console.log('📂 Database:', dbName);
-  } catch (error) {
-    throw new Error(`Invalid DATABASE_URL format: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   console.log('🗄️  Creating database tables...');
@@ -286,162 +270,8 @@ async function init() {
     `);
     console.log('✅ All database tables created successfully');
   } catch (e: any) {
-    console.error('❌ Error creating tables:', e.message);
-    if (e?.message && /does not exist/i.test(e.message)) {
-      const adminPool = new Pool({ connectionString: adminUrl.toString() });
-      await adminPool.query(`CREATE DATABASE "${dbName}"`);
-      await adminPool.end();
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          user_id SERIAL PRIMARY KEY,
-          username VARCHAR(100) UNIQUE NOT NULL,
-          password TEXT NOT NULL,
-          role VARCHAR(20) DEFAULT 'cashier' CHECK (role IN ('admin', 'manager', 'cashier'))
-        )
-      `);
-      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'cashier'`);
-      await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
-      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'cashier'))`);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS products (
-          product_id SERIAL PRIMARY KEY,
-          product_name VARCHAR(200) NOT NULL,
-          sku VARCHAR(100),
-          category VARCHAR(100)
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS vendors (
-          vendor_id SERIAL PRIMARY KEY,
-          name VARCHAR(200) NOT NULL,
-          contact_no1 VARCHAR(20),
-          contact_no2 VARCHAR(20),
-          email VARCHAR(200),
-          address TEXT
-        )
-      `);
-      await pool.query(`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key`);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS inventory_items (
-          inventory_id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(product_id),
-          vendor_id INT REFERENCES vendors(vendor_id),
-          brand VARCHAR(100),
-          qty NUMERIC(12,2) NOT NULL DEFAULT 0,
-          UNIQUE(product_id, vendor_id, brand)
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS customers (
-          customer_id SERIAL PRIMARY KEY,
-          name VARCHAR(200),
-          contact_no VARCHAR(20),
-          address TEXT,
-          created_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sales (
-          sale_id SERIAL PRIMARY KEY,
-          sale_invoice_no VARCHAR(100),
-          customer_id INT REFERENCES customers(customer_id),
-          date TIMESTAMP DEFAULT NOW(),
-          total_amount NUMERIC(12,2),
-          discount NUMERIC(10,2),
-          note TEXT
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sales_items (
-          sales_item_id SERIAL PRIMARY KEY,
-          sale_id INT REFERENCES sales(sale_id) ON DELETE CASCADE,
-          inventory_id INT REFERENCES inventory_items(inventory_id),
-          qty NUMERIC(12,2) NOT NULL,
-          brand VARCHAR(100),
-          unit_price NUMERIC(10,2),
-          selling_price NUMERIC(10,2),
-          profit NUMERIC(12,2)
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS purchases (
-          purchase_id SERIAL PRIMARY KEY,
-          invoice_no VARCHAR(100),
-          vendor_id INT REFERENCES vendors(vendor_id),
-          date TIMESTAMP DEFAULT NOW(),
-          bill_price NUMERIC(12,2) DEFAULT 0,
-          unit_price NUMERIC(10,2),
-          selling_price NUMERIC(10,2)
-        )
-      `);
-      await pool.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS purchase_date DATE`);
-      await pool.query(`ALTER TABLE purchases ALTER COLUMN purchase_date TYPE DATE USING purchase_date::date`);
-      await pool.query(`UPDATE purchases SET purchase_date = date::date WHERE purchase_date IS NULL OR purchase_date IS DISTINCT FROM date::date`);
-      await pool.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS unit_price NUMERIC(10,2)`);
-      await pool.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10,2)`);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS barcode (
-          barcode_id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(product_id),
-          invoice_no VARCHAR(100),
-          brand VARCHAR(100),
-          purchase_date DATE,
-          barcode VARCHAR(200) UNIQUE NOT NULL,
-          created_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      await pool.query(`ALTER TABLE barcode ADD COLUMN IF NOT EXISTS purchase_id INT`);
-      await pool.query(`ALTER TABLE barcode ADD COLUMN IF NOT EXISTS invoice_no VARCHAR(100)`);
-      await pool.query(`ALTER TABLE barcode ADD COLUMN IF NOT EXISTS brand VARCHAR(100)`);
-      await pool.query(`ALTER TABLE barcode ADD COLUMN IF NOT EXISTS purchase_date DATE`);
-      await pool.query(`ALTER TABLE barcode DROP CONSTRAINT IF EXISTS fk_purchase`);
-      await pool.query(`ALTER TABLE barcode ADD CONSTRAINT fk_purchase FOREIGN KEY (purchase_id) REFERENCES purchases(purchase_id) ON DELETE CASCADE`);
-      await pool.query(`ALTER TABLE barcode DROP COLUMN IF EXISTS purchase_id`);
-      await pool.query(`ALTER TABLE barcode DROP COLUMN IF EXISTS date`);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS expenses (
-          expense_id SERIAL PRIMARY KEY,
-          name VARCHAR(200) NOT NULL,
-          amount NUMERIC(12,2) NOT NULL,
-          note TEXT
-        )
-      `);
-      await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`);
-      await pool.query(`UPDATE expenses SET created_at = NOW() WHERE created_at IS NULL`);
-      await pool.query(`ALTER TABLE customers ADD COLUMN IF NOT EXISTS nic VARCHAR(20)`);
-      await pool.query(`ALTER TABLE customers ADD COLUMN IF NOT EXISTS joined_date DATE`);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS loyalty_customers (
-          loyalty_customer_id SERIAL PRIMARY KEY,
-          name VARCHAR(200) NOT NULL,
-          mobile_no VARCHAR(20),
-          nic VARCHAR(20),
-          address TEXT,
-          joined_date DATE,
-          created_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS purchase_items (
-          purchase_item_id SERIAL PRIMARY KEY,
-          purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE,
-          product_id INT REFERENCES products(product_id),
-          qty NUMERIC(12,2) NOT NULL,
-          total_price NUMERIC(12,2) NOT NULL,
-          unit_price NUMERIC(10,2) NOT NULL,
-          brand VARCHAR(100),
-          selling_price NUMERIC(10,2),
-          remaining_qty NUMERIC(12,2)
-        )
-      `);
-      await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS remaining_qty NUMERIC(12,2)`);
-      await pool.query(`ALTER TABLE purchase_items ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10,2)`);
-      await pool.query(`UPDATE purchase_items SET remaining_qty = qty WHERE remaining_qty IS NULL`);
-      console.log('✅ Database created and tables initialized');
-    } else {
-      console.error('❌ Unexpected database error:', e);
-      throw e;
-    }
+    console.error('❌ Error creating tables:', e);
+    throw e;
   }
 
   console.log('👤 Setting up admin user...');

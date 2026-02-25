@@ -1,44 +1,46 @@
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
+import dotenv from 'dotenv';
 
-// Parse DATABASE_URL or use explicit parameters
-const getDatabaseConfig = () => {
-  const dbUrl = process.env.DATABASE_URL;
+// Ensure env vars are loaded
+dotenv.config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+const connectionString = process.env.DATABASE_URL;
+
+console.log(`🔌 Database Config: ${connectionString ? 'Using DATABASE_URL' : 'Using individual variables'}`);
+
+let poolConfig: PoolConfig;
+
+if (connectionString) {
+  // Mask password for logging
+  const masked = connectionString.replace(/:[^:@]*@/, ':****@');
+  console.log(`🔌 Connection String: ${masked}`);
   
-  if (dbUrl) {
-    // Parse connection string manually to avoid pg parsing issues
-    const url = new URL(dbUrl);
-    return {
-      host: url.hostname,
-      port: parseInt(url.port) || 5432,
-      database: url.pathname.slice(1), // Remove leading '/'
-      user: url.username,
-      password: url.password,
-    };
-  }
-  
-  // Fallback to individual env variables if needed
-  return {
+  poolConfig = {
+    connectionString,
+    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+  };
+} else {
+  poolConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'postgres',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
+    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
   };
-};
+}
 
-// Create a new pool instance using explicit parameters
-export const pool = new Pool(getDatabaseConfig());
+export const pool = new Pool(poolConfig);
 
-// Function to ensure the pool is connected/ready (mostly for compatibility with previous logic)
 export async function ensurePool() {
   try {
-    // Test connection
     const client = await pool.connect();
-    console.log('Successfully connected to PostgreSQL database.');
+    console.log('✅ Successfully connected to PostgreSQL database.');
     client.release();
     return pool;
   } catch (err) {
-    console.error('Error connecting to PostgreSQL database:', err);
+    console.error('❌ Error connecting to PostgreSQL database:', err);
     throw err;
   }
 }
