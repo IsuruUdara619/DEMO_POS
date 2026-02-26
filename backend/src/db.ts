@@ -18,7 +18,9 @@ if (connectionString) {
   
   poolConfig = {
     connectionString,
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    // Enable SSL for production, but allow self-signed certs (common in cloud DBs)
+    // Also enable SSL if explicitly requested via DB_SSL=true
+    ssl: (isProduction || process.env.DB_SSL === 'true') ? { rejectUnauthorized: false } : undefined,
   };
 } else {
   poolConfig = {
@@ -27,7 +29,7 @@ if (connectionString) {
     database: process.env.DB_NAME || 'postgres',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    ssl: (isProduction || process.env.DB_SSL === 'true') ? { rejectUnauthorized: false } : undefined,
   };
 }
 
