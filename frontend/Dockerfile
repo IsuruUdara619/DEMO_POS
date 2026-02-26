@@ -28,5 +28,5 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 # Expose port 80
 EXPOSE 80
 
-# Start nginx with environment variable substitution
-CMD ["/bin/sh", "-c", "envsubst '${BACKEND_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Start nginx with environment variable substitution (defaulting BACKEND_URL if not set)
+CMD ["/bin/sh", "-c", "export BACKEND_URL=${BACKEND_URL:-http://backend:5000} && envsubst '${BACKEND_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
