@@ -5,13 +5,13 @@ import { get } from '../services/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const roseGold = '#31a354';
+  const roseGold = '#134E8E';
   const roseGoldLight = '#e0e0e0';
-  const gold = '#31a354';
+  const gold = '#134E8E';
   const goldHover = '#e6b400';
   const white = '#ffffff';
-  const btnGrad = `linear-gradient(135deg, ${gold},   #31a354)`;
-  const btnHoverGrad = `linear-gradient(135deg, ${goldHover}, #31a354)`;
+  const btnGrad = `linear-gradient(135deg, ${gold},   #134E8E)`;
+  const btnHoverGrad = `linear-gradient(135deg, ${goldHover}, #134E8E)`;
   const standardColors = ['#3366CC','#DC3912','#FF9900','#109618','#990099','#3B3EAC','#0099C6'];
   function adjust(hex: string, amt: number) {
     const clean = hex.replace('#', '');
@@ -222,14 +222,14 @@ export default function Dashboard() {
         }}>
           {/* Header */}
           <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ color: '#31a354', fontSize: 'clamp(24px, 4vh, 44px)', fontWeight: 900, margin: 0 }}>Dashboard</h2>
+            <h2 style={{ color: '#134E8E', fontSize: 'clamp(24px, 4vh, 44px)', fontWeight: 900, margin: 0 }}>Dashboard</h2>
             <div />
           </div>
 
           {/* Top Section: Quick Access & Stats */}
           <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-              <div onClick={goSales} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div onClick={goSales} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Quick Access</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Sales</div>
                 <div style={{ fontSize: 12, color: '#ccc' }}>Create and manage sales</div>
@@ -239,7 +239,7 @@ export default function Dashboard() {
                   <path d="M3 4h2l2 12h10l2-6H8" fill="none" stroke="#2e7d32" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div onClick={goProducts} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div onClick={goProducts} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Quick Access</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Products</div>
                 <div style={{ fontSize: 12, color: '#ccc' }}>View and edit products</div>
@@ -248,7 +248,7 @@ export default function Dashboard() {
                   <path d="M12 3v18" stroke="#0d47a1" strokeWidth={2} opacity={0.6} />
                 </svg>
               </div>
-              <div onClick={() => setShowLowStockModal(true)} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: lowStockItems.length > 0 ? '#b71c1c' : '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div onClick={() => setShowLowStockModal(true)} style={{ cursor: 'pointer', padding: 18, borderRadius: 14, background: lowStockItems.length > 0 ? '#b71c1c' : '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Alerts</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>Low Stock: {lowStockItems.length}</div>
                 <div style={{ fontSize: 12, color: '#ccc' }}>Click to view details</div>
@@ -259,7 +259,7 @@ export default function Dashboard() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-              <div style={{ padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div style={{ padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Today Sales</div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(todaySales)}</div>
                 <svg width={36} height={36} viewBox="0 0 24 24" style={{ position: 'absolute', top: 10, right: 10 }}>
@@ -270,7 +270,7 @@ export default function Dashboard() {
                   <circle cx={18} cy={7} r={2} fill="#2e7d32" />
                 </svg>
               </div>
-              <div style={{ padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div style={{ padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Today Expenses</div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(todayExpenses)}</div>
                 <svg width={36} height={36} viewBox="0 0 24 24" style={{ position: 'absolute', top: 10, right: 10 }}>
@@ -278,14 +278,14 @@ export default function Dashboard() {
                   <path d="M8 12h8" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
                 </svg>
               </div>
-              <div style={{ padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div style={{ padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Profit</div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>Rs. {fmt(todayProfit)}</div>
                 <svg width={36} height={36} viewBox="0 0 24 24" style={{ position: 'absolute', top: 10, right: 10 }}>
                   <path d="M4 16h4l3-6 4 5 5-9" fill="none" stroke="#2e7d32" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div style={{ padding: 18, borderRadius: 14, background: '#31a354', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
+              <div style={{ padding: 18, borderRadius: 14, background: '#134E8E', border: 'none', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)'; }}>
                 <div style={{ color: '#ccc', fontWeight: 700, opacity: 0.9 }}>Most Moving</div>
                 {mostMoving.length === 0 ? (
                   <div style={{ color: '#aaa' }}>No data</div>
@@ -307,7 +307,7 @@ export default function Dashboard() {
           {/* Charts Section - Flexible */}
           <div style={{ flex: '1 1 0', minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 12 }}>
             {/* Purchases by Vendor */}
-            <div style={{ padding: 16, borderRadius: 12, background: '#31a354', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', border: 'none', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease', color: '#fff', display: 'flex', flexDirection: 'column' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.12)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}>
+            <div style={{ padding: 16, borderRadius: 12, background: '#134E8E', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', border: 'none', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease', color: '#fff', display: 'flex', flexDirection: 'column' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.12)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}>
               <div style={{ color: '#fff', fontWeight: 700, marginBottom: 8, flex: '0 0 auto' }}>Purchases by Vendor</div>
               <svg width={36} height={36} viewBox="0 0 24 24" style={{ position: 'absolute', top: 10, right: 10 }}>
                 <path d="M3 7h18l-2 12H5L3 7z" fill="#fff" opacity={0.6} />
@@ -367,7 +367,7 @@ export default function Dashboard() {
             </div>
 
             {/* Status Chart */}
-            <div style={{ padding: 16, borderRadius: 12, background: '#31a354', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', border: 'none', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease', color: '#fff', display: 'flex', flexDirection: 'column' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.12)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}>
+            <div style={{ padding: 16, borderRadius: 12, background: '#134E8E', boxShadow: '0 6px 18px rgba(0,0,0,0.08)', border: 'none', position: 'relative', transition: 'transform 150ms ease, box-shadow 150ms ease', color: '#fff', display: 'flex', flexDirection: 'column' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(0,0,0,0.12)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}>
               <div style={{ color: '#fff', fontWeight: 700, marginBottom: 8, flex: '0 0 auto' }}>Status</div>
               <svg width={28} height={28} viewBox="0 0 24 24" style={{ position: 'absolute', top: 12, right: 12 }}>
                 <rect x={4} y={12} width={4} height={8} rx={1} fill="#66bb6a" />

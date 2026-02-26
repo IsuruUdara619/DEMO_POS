@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { get, post } from '../services/api';
 import Layout from '../components/Layout';
 
-const roseGold = '#31a354';
+const roseGold = '#134E8E';
 const roseGoldLight = '#e0e0e0';
-const gold = '#31a354';
+const gold = '#134E8E';
 const goldHover = '#003366';
 
 export default function Expenses() {

@@ -7,8 +7,8 @@ import ErrorLogViewer from '../components/ErrorLogViewer';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const roseGold = '#31a354';
-  const gold = '#31a354';
+  const roseGold = '#134E8E';
+  const gold = '#134E8E';
   const goldHover = '#003366';
   const white = '#ffffff';
   const theme = 'dark';

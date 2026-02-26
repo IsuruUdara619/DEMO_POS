@@ -5,9 +5,9 @@ import Layout from '../components/Layout';
 
 export default function Vendors() {
   const navigate = useNavigate();
-  const roseGold = '#31a354';
+  const roseGold = '#134E8E';
   const roseGoldLight = '#e0e0e0';
-  const gold = '#31a354';
+  const gold = '#134E8E';
   const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);

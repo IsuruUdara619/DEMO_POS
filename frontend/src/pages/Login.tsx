@@ -9,8 +9,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const roseGold = '#31a354';
-  const gold = '#31a354';
+  const roseGold = '#134E8E';
+  const gold = '#134E8E';
   const goldHover = '#e6b400';
 
   async function handleSubmit(e: React.FormEvent) {
@@ -44,14 +44,14 @@ export default function Login() {
       <div style={{
         display: 'flex', gap: 12, alignItems: 'center', padding: 12,
         position: 'sticky', top: 0,
-        background: '#31a354',
+        background: '#134E8E',
         color: '#fff', borderBottom: `1px solid ${roseGold}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
         {/* <img src={companyLogo} alt="Logo" style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 4, background: '#fff', padding: 2 }} /> */}
         <div style={{ fontWeight: 700, fontSize: 24 }}>Demo POS System</div>
       </div>
-      <div style={{ maxWidth: 360, margin: '60px auto', padding: 24, border: '1px solid #555', borderRadius: 12, background: '#31a354', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+      <div style={{ maxWidth: 360, margin: '60px auto', padding: 24, border: '1px solid #555', borderRadius: 12, background: '#134E8E', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
       <h2 style={{ color: '#fff' }}>Login</h2>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 12 }}>

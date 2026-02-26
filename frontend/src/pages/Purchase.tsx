@@ -5,7 +5,7 @@ import { get, post } from '../services/api';
 
 export default function Purchase() {
   const navigate = useNavigate();
-  const gold = '#31a354';
+  const gold = '#134E8E';
   const goldHover = '#003366';
 
   const [showForm, setShowForm] = useState(false);

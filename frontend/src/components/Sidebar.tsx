@@ -80,7 +80,7 @@ export default function Sidebar() {
 
   const btnGrad = 'transparent';
   const btnHoverGrad = '#f0f2f5';
-  const sidebarBg = '#31a354'; 
+  const sidebarBg = '#134E8E'; 
 
   return (
     <div style={{
@@ -147,7 +147,7 @@ export default function Sidebar() {
               title={isCollapsed ? item.label : ''}
               style={{
                 background: isActive ? btnHoverGrad : btnGrad,
-                color: isActive ? '#31a354' : '#fff',
+                color: isActive ? '#134E8E' : '#fff',
                 border: 'none',
                 padding: '12px 16px',
                 borderRadius: 12,

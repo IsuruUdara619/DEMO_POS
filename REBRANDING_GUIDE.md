@@ -43,7 +43,7 @@ The application uses hardcoded color values in several components. You need to f
 
 **Primary Colors to Search & Replace:**
 
-- `#31a354` (Navy Blue - Main Sidebar & Header)
+- `#134E8E` (Navy Blue - Main Sidebar & Header)
 - `#808080` (Gray - Backgrounds)
 - `#003366` (Hover State)
 
@@ -57,14 +57,14 @@ The application uses hardcoded color values in several components. You need to f
 #### `frontend/src/components/Sidebar.tsx`
 
 - **Variable**: `sidebarBg`
-- **Action**: Change `#31a354` to the client's primary brand color.
+- **Action**: Change `#134E8E` to the client's primary brand color.
 - **Variable**: `btnHoverGrad`
 - **Action**: Update hover effect color if needed.
 
 #### `frontend/src/pages/Login.tsx`
 
 - **Variables**: `roseGold`, `gold`, `goldHover`
-- **Inline Styles**: Look for `background: '#31a354'` and `background: '#808080'`.
+- **Inline Styles**: Look for `background: '#134E8E'` and `background: '#808080'`.
 - **Text**: Change "Demo POS System" to the client's company name (Line ~52).
 
 #### `frontend/src/components/Layout.tsx`
