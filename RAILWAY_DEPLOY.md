@@ -43,17 +43,16 @@ This guide explains how to deploy the BloomSwiftPOS application (Backend & Front
     - `PORT`: `8080` (CRITICAL: Must match Dockerfile EXPOSE 8080).
     - `NIXPACKS_NX_APP_NAME`: If using Nixpacks, but we recommend Dockerfile.
 
-**Important**: If you are using the `frontend/Dockerfile` provided in this repo, it builds a **Node.js** server (`server.js`).
-If you see Nginx logs or 502 errors, Railway is likely using its default builder (Nixpacks) instead of your Dockerfile.
+**Important**: This project is configured to use **Dockerfiles** for both backend and frontend to ensure consistent environments.
 
-**To fix the 502 Bad Gateway / DNS Resolution Error:**
+**To ensure correct deployment:**
 
 1. Go to Service -> Settings -> Builder.
 2. Select "Dockerfile" (NOT Nixpacks/Heroku).
-3. Set Context to `/frontend`.
+3. Set Context to `/frontend` (for frontend) or `/backend` (for backend).
 4. Redeploy.
 
-(Alternatively, we have added a `nixpacks.toml` to force Node.js usage even with Nixpacks, but Dockerfile is preferred).**Domain**: - Go to Settings -> Networking -> Generate Domain. - This is the URL where you will access your application.
+(We have removed Nginx to simplify the stack. The frontend now runs a lightweight Node.js server).**Domain**: - Go to Settings -> Networking -> Generate Domain. - This is the URL where you will access your application.
 
 ## 3. Verify Deployment
 
