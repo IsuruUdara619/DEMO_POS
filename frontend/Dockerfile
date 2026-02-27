@@ -20,7 +20,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Fix line endings (CRLF to LF) for Windows compatibility
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Use entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]
