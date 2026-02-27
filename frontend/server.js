@@ -31,14 +31,11 @@ app.get('/health', (req, res) => {
 });
 
 // Proxy API requests
-app.use('/api', createProxyMiddleware({
+// Use context matching instead of path mounting to preserve '/api' prefix
+app.use(createProxyMiddleware('/api', {
     target: backendUrl,
     changeOrigin: true,
     secure: false, // Don't verify SSL certs (useful for self-signed or internal)
-    pathRewrite: {
-        // Keep /api prefix as backend expects it
-        // '^/api': '/api' 
-    },
     onProxyReq: (proxyReq, req, res) => {
         // Optional logging
         // console.log(`Proxying ${req.method} ${req.path} -> ${backendUrl}`);

@@ -20,14 +20,14 @@ This guide explains how to deploy the BloomSwiftPOS application (Backend & Front
     - **Watch Paths**: `/backend/**`
 4.  **Environment Variables**:
     - Add the following variables:
-        - `PORT`: `5000` (Railway will assign a random port internally, but setting this helps)
-        - `DATABASE_URL`: Add a PostgreSQL database plugin in Railway and link it. Railway will automatically provide this variable.
-        - `JWT_SECRET`: A long random string.
-        - `ADMIN_USERNAME`: Your desired admin username.
-        - `ADMIN_PASSWORD`: Your desired admin password.
-        - `NODE_ENV`: `production`
-        - `WHATSAPP_ENABLED`: `true`
-        - `THERMAL_PRINTER_NAME`: (Optional, leave blank if no printer attached to server)
+      - `PORT`: `5000` (CRITICAL: Must match Dockerfile EXPOSE 5000)
+      - `DATABASE_URL`: Add a PostgreSQL database plugin in Railway and link it. Railway will automatically provide this variable.
+      - `JWT_SECRET`: A long random string.
+      - `ADMIN_USERNAME`: Your desired admin username.
+      - `ADMIN_PASSWORD`: Your desired admin password.
+      - `NODE_ENV`: `production`
+      - `WHATSAPP_ENABLED`: `true`
+      - `THERMAL_PRINTER_NAME`: (Optional, leave blank if no printer attached to server)
 5.  **Domain**:
     - Go to Settings -> Networking -> Generate Domain.
     - Copy this domain (e.g., `backend-production.up.railway.app`). You'll need it for the frontend.
@@ -37,16 +37,23 @@ This guide explains how to deploy the BloomSwiftPOS application (Backend & Front
 ## 2. Deploy the Frontend
 
 1.  **Add Service**: In the same Railway project, click "New" -> "GitHub Repo" -> Select the same repo.
-2.  **Configure Service**:
-    - **Root Directory**: Set to `/frontend`.
-    - **Build Command**: `npm install && npm run build`.
-    - **Start Command**: `npm start`.
+2.  **Configure Service**: - **Root Directory**: Set to `/frontend`. - **Build Command**: `npm install && npm run build`. - **Start Command**: `npm start`.
 3.  **Environment Variables**:
     - `BACKEND_URL`: The full URL of your backend service (e.g., `https://backend-production.up.railway.app`).
-    - `PORT`: `8080` (Railway will assign a port and inject it).
-4.  **Domain**:
-    - Go to Settings -> Networking -> Generate Domain.
-    - This is the URL where you will access your application.
+    - `PORT`: `8080` (CRITICAL: Must match Dockerfile EXPOSE 8080).
+    - `NIXPACKS_NX_APP_NAME`: If using Nixpacks, but we recommend Dockerfile.
+
+**Important**: If you are using the `frontend/Dockerfile` provided in this repo, it builds a **Node.js** server (`server.js`).
+If you see Nginx logs or 502 errors, Railway is likely using its default builder (Nixpacks) instead of your Dockerfile.
+
+**To fix the 502 Bad Gateway / DNS Resolution Error:**
+
+1. Go to Service -> Settings -> Builder.
+2. Select "Dockerfile" (NOT Nixpacks/Heroku).
+3. Set Context to `/frontend`.
+4. Redeploy.
+
+(Alternatively, we have added a `nixpacks.toml` to force Node.js usage even with Nixpacks, but Dockerfile is preferred).**Domain**: - Go to Settings -> Networking -> Generate Domain. - This is the URL where you will access your application.
 
 ## 3. Verify Deployment
 
@@ -56,9 +63,9 @@ This guide explains how to deploy the BloomSwiftPOS application (Backend & Front
 
 ## Troubleshooting
 
--   **WhatsApp Issues**: If WhatsApp fails to initialize, ensure you are using the `Dockerfile` build for the backend, as it installs the necessary Chromium dependencies.
--   **Connection Errors**: Check the `BACKEND_URL` in the frontend service. It must start with `https://` and have no trailing slash (though the server script handles the slash).
--   **Database Errors**: Ensure the PostgreSQL plugin is attached to the backend service.
+- **WhatsApp Issues**: If WhatsApp fails to initialize, ensure you are using the `Dockerfile` build for the backend, as it installs the necessary Chromium dependencies.
+- **Connection Errors**: Check the `BACKEND_URL` in the frontend service. It must start with `https://` and have no trailing slash (though the server script handles the slash).
+- **Database Errors**: Ensure the PostgreSQL plugin is attached to the backend service.
 
 ## Docker Deployment (Advanced)
 
