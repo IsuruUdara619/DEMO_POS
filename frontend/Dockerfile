@@ -7,24 +7,27 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with nginx
-FROM nginx:alpine
+# Stage 2: Serve with Node.js
+FROM node:20-alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+WORKDIR /app
 
-# Use Railway's PORT
-ENV PORT 80
-# Copy directly as template
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+# Copy package files to install production dependencies
+COPY package*.json ./
+# Install ONLY production dependencies (express, http-proxy-middleware)
+# We use npm install because we want to install dependencies added to package.json even if lockfile is old
+# But to be safe, we can just install express and http-proxy-middleware explicitly if needed, 
+# but copying package.json is better practice.
+RUN npm install --omit=dev
 
-# Use custom main configuration (forces worker_processes 1)
-COPY nginx-main.conf /etc/nginx/nginx.conf
+# Copy the build output
+COPY --from=builder /app/dist ./dist
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-# Fix line endings (CRLF to LF) for Windows compatibility
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+# Copy the server script
+COPY server.js .
 
-# Use entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
+# Expose port (optional, but good for documentation)
+EXPOSE 8080
+
+# Start the server
+CMD ["node", "server.js"]
