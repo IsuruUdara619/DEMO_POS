@@ -16,6 +16,26 @@ if (connectionString) {
   const masked = connectionString.replace(/:[^:@]*@/, ':****@');
   console.log(`🔌 Connection String: ${masked}`);
   
+  // Validate and fix common connection string issues
+  let finalConnectionString = connectionString;
+  
+  // Fix: If URL is just a host without protocol or database, warn or try to fix
+  if (!connectionString.startsWith('postgres://') && !connectionString.startsWith('postgresql://')) {
+    console.error(`
+      ⚠️  INVALID DATABASE_URL FORMAT DETECTED ⚠️
+      The provided DATABASE_URL does not start with 'postgres://' or 'postgresql://'.
+      Current value (masked): ${masked}
+      
+      It looks like you might have pasted just the hostname: '${connectionString}'
+      
+      👉 ACTION REQUIRED:
+      The DATABASE_URL must be a full connection URI:
+      postgres://<user>:<password>@<host>:<port>/<database_name>
+      
+      Check your cloud dashboard and copy the "Internal Database URL" or "Connection String".
+    `);
+  }
+  
   // Check for localhost usage in production
   if (isProduction && (connectionString.includes('localhost') || connectionString.includes('127.0.0.1'))) {
     console.error(`
@@ -31,6 +51,8 @@ if (connectionString) {
     `);
   }
   
+  // Workaround for potential port/db name parsing issues if connection string is malformed
+  // Some cloud providers might append params that confuse the parser
   poolConfig = {
     connectionString,
     // Enable SSL for production, but allow self-signed certs (common in cloud DBs)
