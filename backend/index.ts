@@ -310,8 +310,23 @@ async function init() {
   console.log('✅ Backend initialization complete');
 }
 
+// Global error handlers to catch startup crashes
+process.on('uncaughtException', (error) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔥 UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+
+console.log('🚀 Starting backend initialization...');
+console.log(`ℹ️  Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`ℹ️  Port: ${port}`);
+
 init().then(() => {
-  app.listen(port, () => { 
+  app.listen(port, '0.0.0.0', () => { 
     console.log(`✅ Server listening on port ${port}`);
     console.log(`🚀 Backend server ready`);
   });

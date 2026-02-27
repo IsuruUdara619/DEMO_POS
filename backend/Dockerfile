@@ -70,8 +70,11 @@ RUN npm ci && npm cache clean --force
 # Copy application code
 COPY . .
 
+# Build TypeScript code
+RUN npm run build
+
 # Expose port
 EXPOSE 5000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:prod"]
