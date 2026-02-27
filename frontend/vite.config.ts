@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // Use relative paths for Electron compatibility
+  base: '/', // Absolute path for web deployment
   build: {
     sourcemap: true, // Enable source maps for better error debugging
     rollupOptions: {
