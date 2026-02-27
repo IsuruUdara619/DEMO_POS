@@ -18,6 +18,9 @@ ENV PORT 80
 # Copy directly as template
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
+# Optimize Nginx for container environment (limit workers to avoid OOM)
+RUN sed -i 's/worker_processes auto;/worker_processes 1;/g' /etc/nginx/nginx.conf
+
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 # Fix line endings (CRLF to LF) for Windows compatibility
