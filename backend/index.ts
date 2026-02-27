@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import { pool, ensurePool } from './src/db';
 import authRouter from './src/routes/auth';
@@ -46,18 +47,30 @@ app.use('/api/printer-settings', printerSettingsRouter);
 app.use('/api/diagnostics', diagnosticsRouter);
 app.use('/api/whatsapp', whatsappRouter);
 
-// Serve static files from frontend build
+// Serve static files from frontend build if it exists
 const frontendPath = path.join(__dirname, '../frontend/dist');
-app.use(express.static(frontendPath));
 
-// Handle React routing, return all requests to React app
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    next();
-    return;
-  }
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
+if (fs.existsSync(frontendPath)) {
+  console.log('📦 Frontend build found, serving static files...');
+  app.use(express.static(frontendPath));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  console.log('⚠️  Frontend build not found (Running in API-only mode)');
+  app.get('/', (req, res) => {
+    res.send({
+      status: 'API Server Running',
+      message: 'This is the backend API. Please access the application via the Frontend URL.',
+      timestamp: new Date().toISOString()
+    });
+  });
+}
 
 // Add error handling middleware (must be last)
 app.use(errorLogger.errorHandler());
