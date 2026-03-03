@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   if (!requireAuth(req, res)) return;
-  const { sale_invoice_no, customer_name, contact_no, address, date, total_amount, discount, note, items, inventory_id, qty, brand, payment_type } = req.body || {};
+  const { sale_invoice_no, customer_name, contact_no, address, date, total_amount, discount, note, items, inventory_id, qty, brand } = req.body || {};
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -52,10 +52,10 @@ router.post('/', async (req, res) => {
     }
 
     const saleRes = await client.query(
-      `INSERT INTO sales (sale_invoice_no, customer_id, date, total_amount, discount, note, payment_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING sale_id, sale_invoice_no, customer_id, date, total_amount, discount, note, payment_type`,
-      [sale_invoice_no || null, customerId, date ? new Date(date) : new Date(), null, discount ? Number(discount) : null, note || null, payment_type || null]
+      `INSERT INTO sales (sale_invoice_no, customer_id, date, total_amount, discount, note)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING sale_id, sale_invoice_no, customer_id, date, total_amount, discount, note`,
+      [sale_invoice_no || null, customerId, date ? new Date(date) : new Date(), null, discount ? Number(discount) : null, note || null]
     );
     const saleId = saleRes.rows[0].sale_id;
 
@@ -223,32 +223,8 @@ router.post('/', async (req, res) => {
       );
     }
 
-    // Check if customer is a loyalty customer
-    let isLoyaltyCustomer = false;
-    if (contact_no) {
-      const loyaltyCheck = await client.query(
-        `SELECT lc.loyalty_customer_id FROM loyalty_customers lc WHERE lc.mobile_no = $1`,
-        [contact_no]
-      );
-      isLoyaltyCustomer = loyaltyCheck.rows.length > 0;
-    }
-
-    // Apply loyalty discount (12%) first, then manual discount
-    let finalTotal = total;
-    if (isLoyaltyCustomer) {
-      finalTotal = finalTotal * 0.88; // 12% off
-    }
-    if (discount) {
-      finalTotal = finalTotal * (1 - (Number(discount) / 100));
-    }
-    finalTotal = Number(finalTotal.toFixed(2));
-
-    // If total_amount was explicitly provided (for backward compatibility), use it
-    if (total_amount) {
-      finalTotal = Number(total_amount);
-    }
-
-    const upd = await client.query(`UPDATE sales SET total_amount = $1 WHERE sale_id = $2 RETURNING sale_id, sale_invoice_no, customer_id, date, total_amount, discount, note, payment_type`, [finalTotal, saleId]);
+    const finalTotal = total_amount ? Number(total_amount) : (discount ? Number((total * (1 - (Number(discount) / 100))).toFixed(2)) : total);
+    const upd = await client.query(`UPDATE sales SET total_amount = $1 WHERE sale_id = $2 RETURNING sale_id, sale_invoice_no, customer_id, date, total_amount, discount, note`, [finalTotal, saleId]);
 
     await client.query('COMMIT');
     res.json({ sale: upd.rows[0], items: insertedItems });

@@ -1,66 +1,9 @@
-# Node modules
-node_modules/
-backend/node_modules/
-frontend/node_modules/
-
-# Environment files
+# Ignore environment files
 backend/.env
-frontend/.env
-.env
-.env.local
-.env.*.local
+node_modules
 
-# Build outputs
-backend/dist/
-backend/build/
-frontend/dist/
-frontend/build/
-
-# Logs
-*.log
-npm-debug.log*
-logs/
-backend/logs/
-frontend/logs/
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Docker volumes
-postgres_data/
-whatsapp_data/
-
-# Database data
-pglite-data/
-
-# WhatsApp session data
-backend/data/.wwebjs_auth/
-whatsapp-session/
-
-# Frontend build
 frontend-build/
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.old
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Package manager
-.pnpm-debug.log*
-.yarn-integrity
-.yarn/
 dist/
+logs/
+coverage/
+.DS_Store

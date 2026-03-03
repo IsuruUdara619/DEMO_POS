@@ -23,25 +23,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.get('/check/:mobile_no', async (req, res) => {
-  if (!requireAuth(req, res)) return
-  const { mobile_no } = req.params
-  if (!mobile_no) return res.status(400).send('Missing mobile number')
-  try {
-    const r = await pool.query(
-      'SELECT loyalty_customer_id, name, mobile_no, nic, address, joined_date FROM loyalty_customers WHERE mobile_no = $1',
-      [mobile_no]
-    )
-    if (r.rows.length > 0) {
-      res.json({ isLoyaltyCustomer: true, customer: r.rows[0] })
-    } else {
-      res.json({ isLoyaltyCustomer: false, customer: null })
-    }
-  } catch (e: any) {
-    res.status(500).send(e?.message || 'Server error')
-  }
-})
-
 router.post('/', async (req, res) => {
   if (!requireAuth(req, res)) return
   const { name, mobile_no, nic, address, joined_date } = req.body as { name: string; mobile_no?: string; nic?: string; address?: string; joined_date?: string }

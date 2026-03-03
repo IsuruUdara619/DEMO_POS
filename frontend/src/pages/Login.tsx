@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { post } from '../services/api';
-import companyLogo from '/wh_logo.png';
+// import companyLogo from '/wh_logo.png';
 
 export default function Login() {
   const [username, setUsername] = useState('admin');

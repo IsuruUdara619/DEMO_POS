@@ -1,10 +1,18 @@
 import { get, post } from './api';
 
 export const whatsapp = {
-  initialize: () => post('/whatsapp/initialize', {}),
-  getStatus: () => get('/whatsapp/status'),
-  getQRCode: () => get('/whatsapp/qr'),
-  disconnect: () => post('/whatsapp/disconnect', {}),
-  reconnect: () => post('/whatsapp/reconnect', {}),
-  sendInvoice: (invoiceData: any) => post('/whatsapp/send-invoice', invoiceData),
+  getStatus: async () => {
+    try {
+      // Return mock status if backend endpoint doesn't exist
+      // or try to call backend
+      return await get('/whatsapp/status');
+    } catch (error) {
+      console.warn('WhatsApp status check failed, assuming disconnected', error);
+      return { isConnected: false };
+    }
+  },
+  
+  sendInvoice: async (data: any) => {
+    return await post('/whatsapp/send-invoice', data);
+  }
 };

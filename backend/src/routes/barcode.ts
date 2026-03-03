@@ -4,49 +4,6 @@ import jwt from 'jsonwebtoken';
 
 const router = Router();
 
-router.get('/search', async (req, res) => {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  const secret = process.env.JWT_SECRET;
-  if (!secret) return res.status(500).send('Server misconfigured');
-  if (!token) return res.status(401).send('Unauthorized');
-  try { jwt.verify(token, secret); } catch { return res.status(401).send('Unauthorized'); }
-
-  const { product_id, purchase_date } = req.query as { product_id?: string; purchase_date?: string };
-  
-  try {
-    let query = `
-      SELECT b.barcode_id, b.product_id, b.invoice_no, b.brand, b.purchase_date, b.barcode, b.created_at,
-             p.product_name, p.sku
-      FROM barcode b
-      LEFT JOIN products p ON p.product_id = b.product_id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
-    let paramCount = 0;
-
-    if (product_id) {
-      paramCount++;
-      query += ` AND b.product_id = $${paramCount}`;
-      params.push(Number(product_id));
-    }
-
-    if (purchase_date) {
-      paramCount++;
-      query += ` AND b.purchase_date = $${paramCount}`;
-      params.push(purchase_date);
-    }
-
-    query += ` ORDER BY b.created_at DESC`;
-
-    const result = await pool.query(query, params);
-    
-    res.json({ barcodes: result.rows });
-  } catch (e: any) {
-    res.status(500).send(e?.message || 'Server error');
-  }
-});
-
 router.post('/', async (req, res) => {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
@@ -81,35 +38,8 @@ router.post('/', async (req, res) => {
       return res.status(400).send('Invalid product_id');
     }
     if (e?.code === '23505') {
-      return res.status(409).send('Barcode already exists for this product and purchase date combination. Please use a different barcode or change the date.');
+      return res.status(409).send('Barcode already exists');
     }
-    res.status(500).send(e?.message || 'Server error');
-  }
-});
-
-router.delete('/:barcode_id', async (req, res) => {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  const secret = process.env.JWT_SECRET;
-  if (!secret) return res.status(500).send('Server misconfigured');
-  if (!token) return res.status(401).send('Unauthorized');
-  try { jwt.verify(token, secret); } catch { return res.status(401).send('Unauthorized'); }
-
-  const barcodeId = req.params.barcode_id;
-  if (!barcodeId) return res.status(400).send('Missing barcode_id');
-
-  try {
-    const result = await pool.query(
-      'DELETE FROM barcode WHERE barcode_id = $1 RETURNING barcode_id',
-      [Number(barcodeId)]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).send('Barcode not found');
-    }
-
-    res.json({ message: 'Barcode deleted successfully', barcode_id: result.rows[0].barcode_id });
-  } catch (e: any) {
     res.status(500).send(e?.message || 'Server error');
   }
 });
@@ -125,16 +55,7 @@ router.get('/:barcode/pricing', async (req, res) => {
   const code = (req.params.barcode || '').trim();
   if (!code) return res.status(400).send('Missing barcode');
   try {
-    // Get barcode entries, ordered by most recent purchase date first (FIFO - sell oldest first)
-    // If you want LIFO (sell newest first), change ORDER BY to DESC
-    const br = await pool.query(
-      `SELECT product_id, invoice_no, brand, purchase_date 
-       FROM barcode 
-       WHERE barcode = $1 
-       ORDER BY purchase_date ASC NULLS LAST, created_at ASC
-       LIMIT 1`,
-      [code]
-    );
+    const br = await pool.query(`SELECT product_id, invoice_no, brand, purchase_date FROM barcode WHERE barcode = $1`, [code]);
     let productId: number | null = null;
     let invoiceNo: string | null = null;
     let brandFromCode: string | null = null;
