@@ -1,7 +1,15 @@
-import logger from './logger';
 
 // Use environment variable or default to relative path for Vite proxy
 const base = import.meta.env.VITE_API_URL || '/api';
+
+const logger = {
+  info: console.log,
+  error: console.error,
+  warn: console.warn,
+  debug: console.debug,
+  logApiError: (err: any, url: string, method: string) => console.error(`API Error [${method}] ${url}`, err),
+  logPerformance: (label: string, duration: number) => console.debug(`[Perf] ${label}: ${duration.toFixed(2)}ms`)
+};
 
 async function handleResponse(res: Response, method: string, path: string) {
   if (!res.ok) {

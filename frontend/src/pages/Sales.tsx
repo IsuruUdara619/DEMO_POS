@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../services/api';
-import { whatsapp } from '../services/whatsapp';
-import Layout from '../components/Layout';
 
 const roseGold = '#134E8E';
 const roseGoldLight = '#e0e0e0';
@@ -47,9 +45,7 @@ export default function Sales() {
   const [amountGiven, setAmountGiven] = useState('');
   const [changeAmount, setChangeAmount] = useState(0);
   const [hoveredSaleId, setHoveredSaleId] = useState<number | null>(null);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [whatsappInvoiceData, setWhatsappInvoiceData] = useState<any>(null);
-  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoyaltyCustomer, setIsLoyaltyCustomer] = useState(false);
   const [loyaltyCustomerName, setLoyaltyCustomerName] = useState('');
@@ -503,55 +499,7 @@ export default function Sales() {
     }
   }
 
-  async function checkLoyaltyAndSendWhatsApp(invoiceData: any) {
-    // Check if contact number exists
-    if (!invoiceData.contact_no || !invoiceData.contact_no.trim()) {
-      return; // No contact number, skip WhatsApp
-    }
 
-    try {
-      // Check WhatsApp connection status
-      const statusResult = await whatsapp.getStatus();
-        
-      if (!statusResult.isConnected) {
-        return; // WhatsApp not connected, skip
-      }
-
-      // Prepare invoice data for WhatsApp modal
-      setWhatsappInvoiceData(invoiceData);
-      setShowWhatsAppModal(true);
-    } catch (error) {
-      console.error('Error checking WhatsApp status:', error);
-      // Silently fail, don't interrupt the sale process
-    }
-  }
-
-  async function sendWhatsAppInvoice() {
-    if (!whatsappInvoiceData) return;
-
-    setSendingWhatsApp(true);
-    try {
-      await whatsapp.sendInvoice({
-        contact_no: whatsappInvoiceData.contact_no,
-        invoice_no: whatsappInvoiceData.invoice_no,
-        date: whatsappInvoiceData.date,
-        customer_name: whatsappInvoiceData.customer_name,
-        items: whatsappInvoiceData.items,
-        discount: whatsappInvoiceData.discount,
-        total_amount: whatsappInvoiceData.total_amount,
-        payment_type: whatsappInvoiceData.payment_type
-      });
-
-      alert('✅ Invoice sent via WhatsApp successfully!');
-      setShowWhatsAppModal(false);
-      setWhatsappInvoiceData(null);
-    } catch (err: any) {
-      const errorMsg = err?.message || 'Failed to send WhatsApp message';
-      alert('❌ ' + errorMsg);
-    } finally {
-      setSendingWhatsApp(false);
-    }
-  }
 
   async function reprintReceipt(sale: any) {
     try {
@@ -623,7 +571,7 @@ export default function Sales() {
   }
 
   return (
-    <Layout>
+    <div>
       <div>
         <div style={{ marginBottom: 16 }}>
           <h2 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700 }}>Sales</h2>
@@ -1164,7 +1112,7 @@ export default function Sales() {
                               total_amount: total,
                               payment_type: 'Cash Payment'
                             };
-                            await checkLoyaltyAndSendWhatsApp(invoiceData);
+
 
                             // Reset form
                             setInvoiceNo(''); 
@@ -1318,7 +1266,7 @@ export default function Sales() {
                               total_amount: total,
                               payment_type: 'Card Payment'
                             };
-                            await checkLoyaltyAndSendWhatsApp(invoiceData);
+
 
                             // Reset form
                             setInvoiceNo(''); 
@@ -1440,29 +1388,8 @@ export default function Sales() {
             ));
           })()}
         </div>
-        {showWhatsAppModal && whatsappInvoiceData && (
-          <div style={{ position: 'fixed', left: 0, top: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-            <div style={{ background: '#333', borderRadius: 16, padding: 32, maxWidth: 500, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid #555', color: '#fff' }}>
-              <h3 style={{ margin: '0 0 16px', color: roseGold, fontSize: 20, fontWeight: 700 }}>📱 Send Invoice via WhatsApp?</h3>
-              <p style={{ color: '#ccc', marginBottom: 20 }}>
-                Send invoice details to <strong>{whatsappInvoiceData.customer_name || 'customer'}</strong> at <strong>{whatsappInvoiceData.contact_no}</strong>
-              </p>
-              <div style={{ background: '#444', padding: 16, borderRadius: 8, marginBottom: 20, border: '1px solid #555' }}>
-                <div style={{ fontSize: 13, color: '#ccc' }}>
-                  📋 Invoice: {whatsappInvoiceData.invoice_no}<br/>
-                  💰 Total: Rs. {whatsappInvoiceData.total_amount.toFixed(2)}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => { setShowWhatsAppModal(false); setWhatsappInvoiceData(null); }} style={{ flex: 1, background: '#555', color: '#fff', border: 'none', padding: '12px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Skip</button>
-                <button onClick={sendWhatsAppInvoice} disabled={sendingWhatsApp} style={{ flex: 1, background: gold, color: '#fff', border: 'none', padding: '12px', borderRadius: 8, fontWeight: 600, cursor: sendingWhatsApp ? 'not-allowed' : 'pointer', opacity: sendingWhatsApp ? 0.6 : 1 }} onMouseEnter={e => { if (!sendingWhatsApp) e.currentTarget.style.background = goldHover; }} onMouseLeave={e => { if (!sendingWhatsApp) e.currentTarget.style.background = gold; }}>
-                  {sendingWhatsApp ? 'Sending...' : '✅ Send Now'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
-    </Layout>
+    </div>
   );
 }

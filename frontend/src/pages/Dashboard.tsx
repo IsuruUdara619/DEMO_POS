@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+
 import { useEffect, useMemo, useState } from 'react';
 import { get } from '../services/api';
 
@@ -202,7 +202,7 @@ export default function Dashboard() {
   );
 
   return (
-    <Layout backgroundColor="#  808080" mainContentPadding={0}>
+    <div style={{ backgroundColor: '#808080', padding: 0, minHeight: '100vh' }}>
       <div style={{
         height: '100%',
         display: 'flex',
@@ -466,6 +466,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-    </Layout>
+    </div>
   );
 }

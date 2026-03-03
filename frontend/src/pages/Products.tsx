@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+
 import { post, get, put } from '../services/api';
 import JsBarcode from 'jsbarcode';
 
@@ -358,7 +358,7 @@ export default function Products() {
   }
 
   return (
-    <Layout backgroundColor="#d0d0d0ff">
+    <div style={{ backgroundColor: '#d0d0d0ff', minHeight: '100vh', padding: 20 }}>
     <div style={{ padding: 24 }}>
       <style>
         {`
